@@ -1,22 +1,13 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { NAV_ITEMS } from '@/app/navigation';
-import { jsonResponse, renderApp } from '@/test/render';
-
-const HEALTH = {
-  status: 'ok',
-  version: '0.1.0',
-  schema_revision: '0001',
-  database_path: 'C:\\data\\powershift.db',
-};
+import { HEALTH, installFakeBackend } from '@/test/fakeBackend';
+import { renderApp } from '@/test/render';
 
 describe('App shell', () => {
-  beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(HEALTH)));
-  });
-
   it('lists all nine sections in the sidebar', async () => {
+    installFakeBackend();
     renderApp();
 
     const nav = await screen.findByRole('navigation', { name: 'Main' });
@@ -25,27 +16,26 @@ describe('App shell', () => {
   });
 
   it('shows real backend status on the overview page', async () => {
+    installFakeBackend();
     renderApp();
 
     expect(await screen.findByText('Backend connected')).toBeInTheDocument();
-    expect(screen.getByText('0001')).toBeInTheDocument();
-    expect(screen.getByText('C:\\data\\powershift.db')).toBeInTheDocument();
+    expect(screen.getByText(HEALTH.schema_revision ?? '')).toBeInTheDocument();
+    expect(screen.getByText(HEALTH.database_path)).toBeInTheDocument();
   });
 
   it('shows a backend error with a working retry button', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse({ error: { code: 'internal_error', message: 'Database unavailable' } }, 500))
-      .mockResolvedValueOnce(jsonResponse(HEALTH));
-    vi.stubGlobal('fetch', fetchMock);
+    const backend = installFakeBackend();
+    backend.respondOnce('GET', '/api/health', 500, { error: { code: 'internal_error', message: 'Database unavailable' } });
     renderApp();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Database unavailable');
+    expect(await screen.findByText('Database unavailable')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Check again' }));
     expect(await screen.findByText('Backend connected')).toBeInTheDocument();
   });
 
   it('navigates to a module and marks it active', async () => {
+    installFakeBackend();
     renderApp();
     const nav = await screen.findByRole('navigation', { name: 'Main' });
 
@@ -54,5 +44,14 @@ describe('App shell', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Smart Scheduler' })).toBeInTheDocument();
     expect(screen.getByText('This module is planned for development Stage 5.')).toBeInTheDocument();
     expect(within(nav).getByRole('link', { name: 'Smart Scheduler' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('guides a new user to set up the household first', async () => {
+    installFakeBackend();
+    renderApp();
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Set up household' }));
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
   });
 });

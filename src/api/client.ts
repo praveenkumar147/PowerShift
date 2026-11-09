@@ -21,6 +21,11 @@ export class ApiError extends Error {
   }
 }
 
+/** Field-level messages from a failed request, keyed by API field path. */
+export function fieldErrorsOf(error: unknown): Record<string, string> {
+  return error instanceof ApiError ? error.fields : {};
+}
+
 interface ErrorBody {
   error?: { code?: string; message?: string; fields?: Record<string, string> };
 }

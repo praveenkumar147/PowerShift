@@ -4,8 +4,9 @@ An offline-first Windows desktop app for estimating household electricity use an
 cost, analysing peak demand, and generating optimized appliance schedules with
 Google OR-Tools (CP-SAT).
 
-> **Status: Stage 1 (foundation) complete.** The desktop shell, local backend,
-> database and migrations work. Household features start in Stage 2.
+> **Status: Stage 2 complete.** Household profile and appliance management
+> (fixed and flexible appliances, validation, per-appliance energy estimates) work.
+> Tariffs and energy analysis come next in Stage 3.
 > See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 All data stays on your computer. There are no accounts, cloud services or external APIs.

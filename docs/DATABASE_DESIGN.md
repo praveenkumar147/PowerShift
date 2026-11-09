@@ -1,6 +1,6 @@
 # Database Design
 
-*Describes the schema that exists now. Last updated: Stage 1 (revision `0001`).*
+*Describes the schema that exists now. Last updated: Stage 2 (revision `0002`).*
 The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-database-design).
 
 ## Engine
@@ -13,6 +13,11 @@ The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-data
 
 ## Migrations
 
+| Revision | Adds |
+|---|---|
+| `0001` | `household`, `app_settings` |
+| `0002` | `appliances`, `appliance_operating_days`, `appliance_usage_blocks`, `appliance_flex_constraints` |
+
 - Alembic scripts live in `backend/powershift/db/migrations/versions/`.
 - The backend upgrades the database to the latest revision automatically at startup.
 - Before migrating an **existing** database, it copies it to `backups/pre-migration-<revision>-<timestamp>.db` using SQLite's online backup API.
@@ -22,7 +27,20 @@ The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-data
 cd backend && .venv/Scripts/alembic revision --autogenerate -m "describe change"
 ```
 
-  Always read the generated file before committing it.
+  **Always read the generated file.** Example: in `0002`, autogenerate silently skipped
+  the case-insensitive unique index on appliance names (SQLite expression indexes can't
+  be compared), so it was added by hand.
+
+## Time representation
+
+Times of day are integers: **minutes since midnight**, in 15-minute steps.
+
+- Start times: 0–1439. End times: 1–1440 (1440 = midnight at the end of the day).
+- If `end <= start`, the period wraps past midnight: 22:00–06:00 is `(1320, 360)`.
+- `(0, 1440)` is the whole day.
+
+Integers avoid time-zone and date problems, make window arithmetic simple
+(`(minute - start) mod 1440`), and convert directly to hourly or 15-minute scheduling slots.
 
 ## Tables
 
@@ -39,7 +57,7 @@ cd backend && .venv/Scripts/alembic revision --autogenerate -m "describe change"
 | time_format | VARCHAR(3) | `12h` or `24h` (CHECK) |
 | created_at, updated_at | DATETIME (UTC) | |
 
-### `app_settings` (one row)
+### `app_settings` (one row, not yet used by the API)
 
 | Column | Type | Rules |
 |---|---|---|
@@ -48,6 +66,63 @@ cd backend && .venv/Scripts/alembic revision --autogenerate -m "describe change"
 | default_optimization_priority | VARCHAR(10) | `cost`, `peak`, `balanced` (CHECK) |
 | created_at, updated_at | DATETIME (UTC) | |
 
-### `alembic_version`
+### `appliances`
 
-Managed by Alembic; stores the current schema revision.
+| Column | Type | Rules |
+|---|---|---|
+| id | INTEGER PK | |
+| name | VARCHAR(100) | unique ignoring case (index `uq_appliances_name_lower` on `lower(name)`) |
+| category | VARCHAR(20) | cooling, lighting, kitchen, laundry, entertainment, water_heating, electronics, other (CHECK) |
+| rated_power_w | FLOAT | > 0; nameplate power of one unit |
+| quantity | INTEGER | ≥ 1 |
+| duty_cycle | FLOAT | 0 < x ≤ 1; share of on-time at rated power |
+| mode | VARCHAR(10) | `fixed` or `flexible` |
+| priority | VARCHAR(10) | `low`, `medium`, `high` |
+| allow_simultaneous | BOOLEAN | false = must not overlap other "false" appliances |
+| created_at, updated_at | DATETIME (UTC) | |
+
+Index: `(category, mode)` for filtering.
+
+### `appliance_operating_days`
+
+| Column | Type | Rules |
+|---|---|---|
+| id | INTEGER PK | |
+| appliance_id | FK → appliances.id, ON DELETE CASCADE | indexed |
+| weekday | INTEGER | 0 = Monday … 6 = Sunday; unique per appliance |
+
+### `appliance_usage_blocks` (fixed appliances)
+
+| Column | Type | Rules |
+|---|---|---|
+| id | INTEGER PK | |
+| appliance_id | FK → appliances.id, ON DELETE CASCADE | indexed |
+| start_minute | INTEGER | 0–1439 |
+| end_minute | INTEGER | 1–1440; may be ≤ start (wraps midnight) |
+
+Blocks of one appliance must not overlap (checked in `domain/appliance.py`).
+
+### `appliance_flex_constraints` (flexible appliances, 1:1)
+
+| Column | Type | Rules |
+|---|---|---|
+| appliance_id | PK and FK → appliances.id, ON DELETE CASCADE | primary key = foreign key enforces one row per appliance |
+| run_duration_minutes | INTEGER | 1–1440 (API: 15–1440 in 15-minute steps) |
+| earliest_start_minute | INTEGER | 0–1439 |
+| latest_end_minute | INTEGER | 1–1440 |
+| current_start_minute | INTEGER | 0–1439; the user's current habit, the baseline for savings |
+| preferred_start_minute, preferred_end_minute | INTEGER NULL | both set or both NULL (CHECK) |
+| must_be_contiguous | BOOLEAN | |
+
+### Why separate child tables instead of JSON columns?
+
+Foreign keys, CHECK constraints and cascading deletes keep the data valid inside the
+database itself, and the scheduler can later query "all flexible appliances" with plain SQL.
+
+## Design notes for updates
+
+- **Operating days are updated by difference** (remove missing days, add new ones), not by
+  delete-all-then-insert. In one flush, SQLAlchemy may insert the new `(appliance, weekday)` row
+  before deleting the old identical one, which would break the unique constraint.
+- **The flexible-constraint row is updated in place**: its primary key is the appliance id,
+  so replacing the object would try to insert a duplicate key.

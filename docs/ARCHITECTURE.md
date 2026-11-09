@@ -1,6 +1,6 @@
 # Architecture
 
-*Describes what is implemented. Last updated: Stage 1.*
+*Describes what is implemented. Last updated: Stage 2.*
 
 ## Overview
 
@@ -35,12 +35,28 @@
 
 | Package | Responsibility | May import |
 |---|---|---|
-| `api/` | HTTP routes, dependencies, token middleware | services, schemas, core |
-| `schemas/` | Pydantic request/response models | — |
-| `services/` | Use cases and transactions *(from Stage 2)* | domain, calculation, optimization, db |
-| `domain/`, `calculation/`, `optimization/` | Pure logic *(from Stages 3–5)* | each other only — never `db/` or `api/` |
-| `db/` | ORM models, sessions, migrations | core |
+| `api/` | HTTP routes only: parse the request, call a service, return a schema | services, schemas, core |
+| `schemas/` | Pydantic request/response models; per-field checks (types, ranges, 15-minute steps) | domain, calculation |
+| `services/` | Use cases: validate, persist, attach estimates and warnings. One request = one transaction | domain, calculation, db, schemas |
+| `domain/` | Pure dataclasses and rules (`ApplianceSpec`, `TimeWindow`, `validate_appliance`) | — |
+| `calculation/` | Pure formulas (`appliance_energy.py`) | domain |
+| `optimization/` | CP-SAT scheduler *(Stage 5)* | domain, calculation |
+| `db/models/` | SQLAlchemy tables | domain (enum values for CHECK constraints) |
+| `db/repositories/` | Queries, plus conversion between rows and domain objects | db/models, domain |
 | `core/` | Config, errors, logging | — |
+
+`domain/` and `calculation/` never import `db/` or `api/`, so the formulas and rules
+are tested without a database (`backend/tests/unit/`).
+
+### Where validation happens
+
+1. **Frontend** (`formModel.ts`): only checks that values can be parsed (a number is a number), for fast feedback.
+2. **Pydantic schema**: each field on its own (`rated_power_w > 0`, times are multiples of 15 minutes).
+3. **Domain rules** (`validate_appliance`): rules involving several fields (the run fits the window; periods don't overlap).
+4. **Database CHECK constraints**: the last line of defence if a bug ever bypasses the layers above.
+
+Every error is returned with the API field path as its key (e.g. `flexible.current_start_minute`),
+so the UI shows each message next to the right input.
 
 ## Backend startup sequence (`powershift/main.py`)
 

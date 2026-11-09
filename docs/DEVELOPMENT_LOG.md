@@ -8,7 +8,7 @@
   Build Tools + Rust install, Python 3.13 venv, PyInstaller one-folder + Rust launcher with Job Object,
   React Router + TanStack Query, ReportLab for PDF, local git, and the modeling choices.
 
-## Stage 1 — Project foundation (2026-11-09) ✅ complete, awaiting approval
+## Stage 1 — Project foundation (2026-11-09) ✅ approved
 
 ### Installed
 - Visual Studio 2022 Build Tools (C++ workload) and Rust 1.99.1 (stable MSVC) via winget.
@@ -40,3 +40,33 @@
 - The production launch path (frozen backend exe) is written but untested until Stage 9.
 - Theme preference is stored in localStorage for now; it moves to `app_settings` in the Settings stage.
 - `httpx2` (suggested by a Starlette deprecation warning) was not adopted; it needs evaluation first.
+
+## Stage 2 — Household profile and appliance management (2026-11-09) ✅ complete, awaiting approval
+
+### Design decisions
+- **Times as minutes since midnight** in 15-minute steps; an end ≤ start wraps past midnight. Converts directly to hourly or 15-minute scheduling slots later.
+- **Fixed vs flexible** stored relationally: fixed appliances have on-periods (`appliance_usage_blocks`); flexible ones have one constraint row (`appliance_flex_constraints`) with run duration, allowed window, **usual start time** (the future savings baseline), an optional preferred window, and contiguity.
+- **Rated vs actual**: max power = rated × quantity (for load limits); average power = max × duty cycle (for energy). Estimates are computed server-side in `calculation/appliance_energy.py` and returned with each appliance.
+- **Four validation layers**: frontend parse checks → Pydantic field checks → domain cross-field rules → database CHECK constraints. Every error is keyed by API field path.
+- **Warnings vs errors**: an appliance that alone exceeds the household load limit is a *warning* (saved, flagged), because the limit can change later; the scheduler will treat it as infeasible in Stage 5.
+- Household profile lives on the Settings page (the sidebar has no separate Household section); the Overview guides first-time setup there.
+
+### Built
+- Backend: `domain/` (time windows, appliance rules), `calculation/appliance_energy.py`, repositories, services, `/api/household` and `/api/appliances` (CRUD, search, filters), migration `0002`.
+- Frontend: reusable `Field`, inputs, `SegmentedControl` (theme switcher refactored onto it), accessible `Modal` (focus trap, Escape, focus return), `ConfirmDialog`, `Badge`; Settings page with household form; Appliances page with filters, table, add/edit dialog and delete confirmation; Overview household summary.
+
+### Verified
+- 78 backend tests, 39 frontend tests, 6 Rust tests pass; ruff, mypy (strict), tsc (strict), ESLint clean; production build succeeds.
+- Live in the browser against the real backend: the existing dev database was backed up and migrated `0001 → 0002`; household saved; a washer with a 3-hour run in a 2-hour window was rejected with the exact backend message under Run duration; a valid overnight washer saved; the water heater load-limit warning displayed; edit dialog pre-filled in dark mode; layout checked at the 1024-pixel minimum window width.
+
+### Problems met and fixed
+- Alembic autogenerate silently skipped the expression index `lower(name)` on SQLite; added by hand to migration `0002`.
+- Pydantic checked the currency pattern before uppercasing, so `"usd"` was rejected; moved normalisation to a "before" validator.
+- The modal focused the close (×) button instead of the element marked `data-autofocus`, because `querySelector("a, b")` returns the first match in the page, not the first selector. Caught by the delete-confirmation test.
+- Errors below the fold weren't visible after submit; the form now scrolls to the first problem. The duration dropdowns now carry `aria-invalid`.
+- Form grids wrapped badly at narrow widths; two columns now start at the `md` breakpoint. Filter selects stretched full-width; fixed with an explicit grid.
+
+### Not done / deferred
+- `app_settings` (theme, default optimization goal) is not exposed through the API yet; the theme stays in localStorage until the Settings stage.
+- Priority, preferred window, contiguity and "allow simultaneous" are stored and validated, but only take effect when the scheduler is built (Stage 5).
+- The dev database at `backend/.data/` now contains sample entries made during browser testing ("Demo home", Refrigerator, Washing machine, Water heater).

@@ -3,7 +3,7 @@ import { cn } from '@/lib/cn';
 
 interface CardProps {
   title?: string;
-  description?: string;
+  description?: string | undefined;
   className?: string;
   children: ReactNode;
 }

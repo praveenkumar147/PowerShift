@@ -42,6 +42,13 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class ValidationFailedError(AppError):
+    """Input is well-formed but breaks a rule involving several fields."""
+
+    status_code = 422
+    code = "validation_error"
+
+
 def error_body(code: str, message: str, fields: dict[str, Any] | None = None) -> dict[str, Any]:
     return {"error": {"code": code, "message": message, "fields": fields or {}}}
 
@@ -51,7 +58,8 @@ def _validation_fields(exc: RequestValidationError) -> dict[str, str]:
     for err in exc.errors():
         # loc looks like ("body", "rated_power_w"); drop the "body"/"query" prefix.
         location = [str(part) for part in err.get("loc", ())[1:]] or ["request"]
-        fields[".".join(location)] = str(err.get("msg", "Invalid value"))
+        message = str(err.get("msg", "Invalid value")).removeprefix("Value error, ")
+        fields[".".join(location)] = message
     return fields
 
 

@@ -32,6 +32,7 @@ export function renderApp(initialPath = '/') {
   return renderWithProviders(<RouterProvider router={router} />);
 }
 
+/** For client unit tests that mock fetch directly. */
 export function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }

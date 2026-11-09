@@ -1,0 +1,117 @@
+/**
+ * In-memory stand-in for the Python backend, installed as `fetch` in tests.
+ * It understands just enough of the API for UI tests; the real rules are
+ * tested in backend/tests.
+ */
+import { vi } from 'vitest';
+import type { HealthResponse } from '@/api/health';
+import type { Appliance, ApplianceInput } from '@/features/appliances/types';
+import type { Household } from '@/features/household/api';
+
+export const HEALTH: HealthResponse = {
+  status: 'ok',
+  version: '0.1.0',
+  schema_revision: '0002',
+  database_path: 'C:\\data\\powershift.db',
+};
+
+export const ZERO_ESTIMATES: Appliance['estimates'] = {
+  max_power_kw: 0,
+  average_power_kw: 0,
+  on_hours_per_day: 0,
+  energy_per_operating_day_kwh: 0,
+  energy_per_week_kwh: 0,
+};
+
+interface Override {
+  method: string;
+  path: string;
+  status: number;
+  body: unknown;
+}
+
+export interface FakeBackend {
+  household: Household | null;
+  appliances: Appliance[];
+  requests: Array<{ method: string; path: string; body: unknown }>;
+  /** Make the next matching request fail (or return a custom body). */
+  respondOnce: (method: string, path: string, status: number, body: unknown) => void;
+}
+
+function json(body: unknown, status = 200): Response {
+  if (status === 204) return new Response(null, { status });
+  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+}
+
+const notFound = () => json({ error: { code: 'not_found', message: 'Not Found', fields: {} } }, 404);
+
+export function installFakeBackend(initial: Partial<Pick<FakeBackend, 'household' | 'appliances'>> = {}): FakeBackend {
+  const overrides: Override[] = [];
+  let nextId = 100;
+  const backend: FakeBackend = {
+    household: initial.household ?? null,
+    appliances: initial.appliances ?? [],
+    requests: [],
+    respondOnce: (method, path, status, body) => overrides.push({ method, path, status, body }),
+  };
+
+  function handle(method: string, url: URL, body: unknown): Response {
+    const path = url.pathname;
+    const overrideIndex = overrides.findIndex((o) => o.method === method && o.path === path);
+    if (overrideIndex >= 0) {
+      const [override] = overrides.splice(overrideIndex, 1);
+      return json(override?.body, override?.status);
+    }
+
+    if (path === '/api/health') return json(HEALTH);
+    if (path === '/api/household') {
+      if (method === 'PUT') backend.household = body as Household;
+      return json(backend.household);
+    }
+    if (path === '/api/appliances' && method === 'GET') {
+      const q = url.searchParams.get('q')?.toLowerCase() ?? '';
+      const category = url.searchParams.get('category');
+      const mode = url.searchParams.get('mode');
+      return json(
+        backend.appliances.filter(
+          (a) => a.name.toLowerCase().includes(q) && (!category || a.category === category) && (!mode || a.mode === mode),
+        ),
+      );
+    }
+    if (path === '/api/appliances' && method === 'POST') {
+      const created: Appliance = { ...(body as ApplianceInput), id: nextId++, estimates: ZERO_ESTIMATES, warnings: [] };
+      backend.appliances.push(created);
+      return json(created, 201);
+    }
+    const match = /^\/api\/appliances\/(\d+)$/.exec(path);
+    if (match) {
+      const id = Number(match[1]);
+      const index = backend.appliances.findIndex((a) => a.id === id);
+      const existing = backend.appliances[index];
+      if (!existing) return notFound();
+      if (method === 'DELETE') {
+        backend.appliances.splice(index, 1);
+        return json(null, 204);
+      }
+      if (method === 'PUT') {
+        const updated: Appliance = { ...existing, ...(body as ApplianceInput) };
+        backend.appliances[index] = updated;
+        return json(updated);
+      }
+      return json(existing);
+    }
+    return notFound();
+  }
+
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: string, init?: RequestInit) => {
+      const method = init?.method ?? 'GET';
+      const body: unknown = init?.body ? JSON.parse(init.body as string) : undefined;
+      const url = new URL(input);
+      backend.requests.push({ method, path: url.pathname + url.search, body });
+      return handle(method, url, body);
+    }),
+  );
+  return backend;
+}
