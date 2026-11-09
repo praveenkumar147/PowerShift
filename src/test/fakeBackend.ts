@@ -8,6 +8,7 @@ import type { HealthResponse } from '@/api/health';
 import type { Appliance, ApplianceInput } from '@/features/appliances/types';
 import type { BillEstimate, EnergyReport, HourlyProfile, MonthlyProjection } from '@/features/energy/types';
 import type { Household } from '@/features/household/api';
+import type { PeakLoadAnalysis } from '@/features/peak-load/types';
 import type { Tariff, TariffInput } from '@/features/tariffs/types';
 
 export const HEALTH: HealthResponse = {
@@ -38,6 +39,8 @@ export interface EnergyFixtures {
   hourly?: HourlyProfile;
   monthly?: MonthlyProjection;
   bill?: BillEstimate;
+  /** A fixed analysis, or one computed from the requested weekday (null = not given). */
+  peak?: PeakLoadAnalysis | ((weekday: number | null) => PeakLoadAnalysis);
 }
 
 export interface FakeBackend {
@@ -101,7 +104,7 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     }
     const tariffResponse = handleTariffs(method, path, body);
     if (tariffResponse) return tariffResponse;
-    const energyResponse = handleEnergy(path);
+    const energyResponse = handleEnergy(url);
     if (energyResponse) return energyResponse;
     if (path === '/api/demo' && method === 'POST') return json({ appliances: 9, tariffs: 1 }, 201);
 
@@ -153,7 +156,14 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     return json(existing);
   }
 
-  function handleEnergy(path: string): Response | null {
+  function handleEnergy(url: URL): Response | null {
+    const path = url.pathname;
+    if (path === '/api/peak-load/analysis') {
+      const peak = backend.energy.peak;
+      if (!peak) return notFound();
+      const weekday = url.searchParams.get('weekday');
+      return json(typeof peak === 'function' ? peak(weekday === null ? null : Number(weekday)) : peak);
+    }
     const fixtures: Record<string, unknown> = {
       '/api/energy/report': backend.energy.report,
       '/api/energy/hourly-profile': backend.energy.hourly,

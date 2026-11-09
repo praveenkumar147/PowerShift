@@ -25,6 +25,17 @@ export const BAR_RADIUS_END: [number, number, number, number] = [0, 4, 4, 0];
 
 export const TOOLTIP_CURSOR = { fill: 'var(--ps-grid)', opacity: 0.6 };
 
+/**
+ * A tidy axis maximum just above `value`, so ticks land on readable numbers:
+ * 3.76 -> 4, 4.3 -> 5, 0.15 -> 0.2, 13 -> 15.
+ */
+export function niceCeiling(value: number): number {
+  if (value <= 0) return 1;
+  const magnitude = 10 ** Math.floor(Math.log10(value));
+  const step = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find((m) => m * magnitude >= value) ?? 10;
+  return Number((step * magnitude).toPrecision(12));
+}
+
 interface TooltipRow {
   label: string;
   value: string;

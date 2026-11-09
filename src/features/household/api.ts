@@ -30,8 +30,9 @@ export function useSaveHousehold() {
     mutationFn: (household: Household) => client.send<Household>('PUT', '/api/household', household),
     onSuccess: (saved) => {
       queryClient.setQueryData(householdQueryKey, saved);
-      // Appliance warnings depend on the household load limit.
+      // Appliance warnings, peak load and money formatting depend on the household.
       void queryClient.invalidateQueries({ queryKey: ['appliances'] });
+      void queryClient.invalidateQueries({ queryKey: ['energy'] });
     },
   });
 }

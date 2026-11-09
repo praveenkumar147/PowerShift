@@ -5,6 +5,7 @@ import { NAV_ITEMS } from '@/app/navigation';
 import { AppliancesPage } from '@/features/appliances/AppliancesPage';
 import { EnergyPage } from '@/features/energy/EnergyPage';
 import { OverviewPage } from '@/features/overview/OverviewPage';
+import { PeakLoadPage } from '@/features/peak-load/PeakLoadPage';
 import { ModulePendingPage } from '@/features/pending/ModulePendingPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { TariffsPage } from '@/features/tariffs/TariffsPage';
@@ -15,6 +16,7 @@ const IMPLEMENTED_PAGES: Record<string, ReactElement> = {
   '/appliances': <AppliancesPage />,
   '/tariff': <TariffsPage />,
   '/energy': <EnergyPage />,
+  '/peak-load': <PeakLoadPage />,
   '/settings': <SettingsPage />,
 };
 

@@ -71,7 +71,7 @@
 - Priority, preferred window, contiguity and "allow simultaneous" are stored and validated, but only take effect when the scheduler is built (Stage 5).
 - The dev database at `backend/.data/` now contains sample entries made during browser testing ("Demo home", Refrigerator, Washing machine, Water heater).
 
-## Stage 3 — Tariff and energy engine (2026-11-09) ✅ complete, awaiting approval
+## Stage 3 — Tariff and energy engine (2026-11-09) ✅ approved
 
 ### Design decisions
 - **Typical-week model**: each appliance gets 96 fifteen-minute average-kW values per weekday. Any period = number of each weekday in it x that weekday's values. Fast and exact for a repeating routine.
@@ -105,3 +105,28 @@
 - Bundle size warning (810 kB, 241 kB gzipped), mostly Recharts; code splitting in Stage 8.
 - Holidays, seasons and real meter data are not modelled.
 - The main dev database (`backend/.data/`) still has the Stage 2 test entries and no tariff; the sample-data check used a separate test database that was deleted afterwards.
+
+## Stage 4 — Peak load analyzer (2026-11-09) ✅ complete, awaiting approval
+
+### Design decisions
+- **kW only.** Peak analysis never mixes in kWh. Two figures per step: **worst case** (all running appliances at full rated power; drives limit warnings) and **expected** (duty-cycle average).
+- **15-minute resolution**, not hourly, so a short spike (a 15-minute kettle on top of a washer) is not averaged away. The data table still offers an hourly view (highest step per hour).
+- **Windows wrap midnight** (22:30-02:00 is one period, not two).
+- **Thresholds are named constants**: high demand = 80% of the limit (or of the day's peak); heavy appliance = 1 kW. Both are stated in the page notes.
+- **Conflicts** (appliances marked "not simultaneous" that overlap at their usual start times) are reported now; the scheduler resolves them in Stage 5.
+- No database changes: peak analysis is derived from appliances and the household limit.
+
+### Built
+- Backend: `calculation/peak_load.py`, `services/peak_load_service.py`, `GET /api/peak-load/analysis`.
+- Frontend: Peak Load page (day picker, headline tiles, violation alert, 15-minute step chart with limit line, peak contributors, clickable peak-by-day chart, high-demand/overlap/conflict lists, notes); shared `NotesBox`; `niceCeiling` for readable chart axes. Saving the household now refreshes all energy and peak figures.
+
+### Verified
+- 168 backend, 67 frontend and 6 Rust tests pass; ruff, mypy (strict), tsc (strict), ESLint clean; build succeeds.
+- Live on sample data: peak 3.76 kW at 22:00-22:30 = dishwasher 1.8 + AC 1.5 + fans 0.225 + fridge 0.15 + lights 0.072 + router 0.012 (checked by hand). The expected peak (3.07 kW) falls at 07:00, a different time. Lowering the limit to 3 kW in Settings immediately showed two violations (07:00-08:00 at 3.16 kW, 22:00-22:30 at 3.76 kW) and 90 minutes over. Clicking a bar switched the analysed day.
+
+### Problems met and fixed
+- The limit reference line stretched the y-axis to awkward ticks (0.95, 1.9, 2.85); axes now end on tidy values (1, 2, 5 x 10^n steps).
+- Accessibility: inline contribution bars got `role="img"` so their share is announced.
+
+### Not done / deferred
+- The Overview does not yet surface peak warnings; dashboard integration is Stage 8.

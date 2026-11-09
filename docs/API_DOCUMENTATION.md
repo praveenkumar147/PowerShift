@@ -1,6 +1,6 @@
 # API Documentation
 
-*Lists implemented endpoints only. Last updated: Stage 3.*
+*Lists implemented endpoints only. Last updated: Stage 4.*
 The planned API is in [STAGE0_PLAN.md §7](STAGE0_PLAN.md#7-api-design).
 
 ## Conventions
@@ -259,3 +259,28 @@ Costs in `/report` are **energy charges only**; fixed charges and taxes appear i
 | Method | Path | Notes |
 |---|---|---|
 | POST | `/api/demo` | 201. Loads a labelled sample household, 9 appliances and a sample TOU tariff with invented rates. **409** unless the database is empty, so it never mixes with real data |
+
+---
+
+## Peak load
+
+### `GET /api/peak-load/analysis?weekday=0..6`
+
+All power values are **kW** (demand), not kWh. Omit `weekday` to analyse the day with
+the highest worst-case peak (`selected_automatically: true`).
+
+| Field | Meaning |
+|---|---|
+| `load_limit_kw` | Household limit, or `null` if no household is set up |
+| `peak_kw` / `peak_expected_kw` | Highest worst-case / expected demand of the day |
+| `headroom_kw` | Limit − peak; negative when exceeded; `null` without a limit |
+| `minutes_over_limit` | Total minutes above the limit |
+| `peak_windows[]` | `start_minute`, `end_minute` (may wrap midnight; 1440 = midnight), `minutes` |
+| `peak_fixed_kw`, `peak_flexible_kw`, `peak_contributors[]` | Who is on at the first peak moment, at full power |
+| `steps[96]` | `start_minute`, `worst_kw`, `expected_kw`, `fixed_kw`, `flexible_kw`, `appliance_ids` |
+| `violations[]`, `high_demand[]`, `overlaps[]`, `conflicts[]` | Window + `max_kw` + `appliances[]` |
+| `week[7]` | Each weekday's `peak_kw`, `peak_expected_kw`, `peak_start_minute`, `minutes_over_limit` |
+| `appliances[]` | Lookup of names, mode, `max_kw`, `allow_simultaneous` |
+| `notes[]` | Assumptions in plain language |
+
+422 if `weekday` is outside 0–6.

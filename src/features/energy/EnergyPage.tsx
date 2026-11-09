@@ -1,9 +1,10 @@
-import { BarChart3, Info } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { useDeferredValue, useState } from 'react';
 import { fieldErrorsOf } from '@/api/client';
 import { ChartCard, DataTable } from '@/components/charts/ChartCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { LinkButton } from '@/components/ui/LinkButton';
+import { NotesBox } from '@/components/ui/NotesBox';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
@@ -156,16 +157,7 @@ function EnergyReportView({ report, filters, currency }: { report: EnergyReport;
         </div>
       </div>
 
-      <section aria-label="How these figures are calculated" className="rounded-xl border border-border bg-surface-raised p-4 text-sm text-muted">
-        <p className="mb-2 flex items-center gap-2 font-medium text-fg">
-          <Info aria-hidden className="size-4" /> How these figures are calculated
-        </p>
-        <ul className="list-disc space-y-1 pl-5">
-          {report.notes.map((note) => (
-            <li key={note}>{note}</li>
-          ))}
-        </ul>
-      </section>
+      <NotesBox notes={report.notes} />
     </div>
   );
 }

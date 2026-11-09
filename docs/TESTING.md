@@ -1,6 +1,6 @@
 # Testing
 
-*Last updated: Stage 3. Totals: 148 backend, 60 frontend, 6 Rust.*
+*Last updated: Stage 4. Totals: 168 backend, 67 frontend, 6 Rust.*
 
 ## How to run
 
@@ -33,6 +33,8 @@
 | `unit/test_energy_model.py` | Weekday counting vs a day-by-day count (incl. leap year and year boundary); November 2026 = 62.7 kWh; daily TOU charge 18.96 / 6.96 by hand; moving the washer off-peak cuts its charge from 12.00 to 4.50; appliance breakdown; category filter; no tariff gives energy but no cost; slab average-rate allocation sums to the bill; range across two months; invalid ranges; hourly profile for a day and the weekly average; 12-month projection |
 | `integration/test_tariffs_api.py` | First tariff becomes active; activation switches; exact decimals; update replaces children; deleting the active tariff; 404s; 8 invalid-tariff cases with field paths; TOU gap message |
 | `integration/test_energy_api.py` | Report with and without a tariff; rounding; category filter; reversed/oversized/garbage date ranges give 422; hourly profile; monthly projection equals the bill; slab note; empty household |
+| `unit/test_peak_load.py` | Worst case vs expected (duty cycle); a 15-minute spike is caught; several peak windows; violation window and culprits; exactly-at-limit is not a violation; no limit; high-demand threshold from limit or peak; heavy overlaps; "not together" conflicts; windows merged across midnight; window edge cases; operating days change each day's peak and the worst-day tie-break; empty household |
+| `integration/test_peak_load_api.py` | Worst day chosen automatically with violation, headroom and contributors; requested weekday; running appliances per step; conflicts; no household limit; empty household; invalid weekday |
 | `integration/test_demo_api.py` | Sample data loads and is labelled; produces a 4-line bill; refuses (409) when any real data exists or when loaded twice |
 
 The fixtures in `tests/factories.py` are test data, not product data. Tariff rates
@@ -54,6 +56,8 @@ in tests are invented round numbers chosen to make hand arithmetic easy.
 | `lib/dates.test.ts` | Local-date parsing, month/year ranges incl. leap years, labels |
 | `features/tariffs/formModel.test.ts` | Flat/TOU/slab conversion, overnight periods, empty slab limit means "no limit", parse errors with backend field paths |
 | `features/tariffs/TariffsPage.test.tsx` | "Never assumes rates" empty state; cards show rates in the household currency; create flat tariff with a charge; TOU payload and backend coverage error; switching the active tariff; warning before deleting the active tariff |
+| `components/charts/chartTheme.test.ts` | Tidy axis maxima (3.76 → 4, 4.3 → 5, 0.16 → 0.2) |
+| `features/peak-load/PeakLoadPage.test.tsx` | Opens on the worst day with headline figures; violation alert with times and culprits; peak contributors and conflicts; switching day sends the weekday and clears the alert; hourly data table; "set a load limit" prompt |
 | `features/energy/EnergyPage.test.tsx` | Headline tiles; data tables behind charts; itemised bill; calculation notes; filters sent to the API; "No tariff" state; range error shown on the date field |
 
 UI tests run against `src/test/fakeBackend.ts`, a small in-memory stand-in for the API,

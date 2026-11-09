@@ -4,9 +4,10 @@ An offline-first Windows desktop app for estimating household electricity use an
 cost, analysing peak demand, and generating optimized appliance schedules with
 Google OR-Tools (CP-SAT).
 
-> **Status: Stage 3 complete.** Household profile, appliance management, configurable
-> tariffs (flat, time-of-use, slab, extra charges and taxes), itemised monthly bill
-> estimates and energy analysis charts work. Peak load analysis comes next in Stage 4.
+> **Status: Stage 4 complete.** Household profile, appliance management, configurable
+> tariffs, itemised bill estimates, energy analysis charts and peak load analysis
+> (15-minute demand profile, load-limit violations, overlaps) work. The CP-SAT
+> Smart Scheduler comes next in Stage 5.
 > See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 All data stays on your computer. There are no accounts, cloud services or external APIs.

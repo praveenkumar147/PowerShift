@@ -20,7 +20,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from powershift import __version__
-from powershift.api import appliances, demo, energy, health, household, tariffs
+from powershift.api import appliances, demo, energy, health, household, peak_load, tariffs
 from powershift.api.security import TOKEN_HEADER, token_middleware
 from powershift.core.config import LOOPBACK_HOST, Settings, parse_settings
 from powershift.core.errors import register_error_handlers
@@ -63,6 +63,7 @@ def create_app(settings: Settings) -> FastAPI:
     app.include_router(appliances.router)
     app.include_router(tariffs.router)
     app.include_router(energy.router)
+    app.include_router(peak_load.router)
     app.include_router(demo.router)
     return app
 

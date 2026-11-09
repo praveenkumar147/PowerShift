@@ -1,6 +1,6 @@
 # Architecture
 
-*Describes what is implemented. Last updated: Stage 3.*
+*Describes what is implemented. Last updated: Stage 4.*
 
 ## Overview
 
@@ -123,3 +123,23 @@ active tariff ──► tariff_engine.step_prices ──┤  (price per step; no
   queries, so every chart recalculates from the backend.
 - Charts (Recharts) each have a "Show data table" view; colours are CSS tokens
   (`--ps-series-1/2`) validated for colour-blind separation and contrast in both themes.
+
+## Peak load analysis (`calculation/peak_load.py`)
+
+Works only in **kW (power)**. For each 15-minute step of a weekday:
+
+| Figure | Formula | Used for |
+|---|---|---|
+| Worst-case demand | Σ rated W × quantity / 1000 of appliances that are on | Load-limit violations, peak, high-demand periods |
+| Expected demand | Σ worst-case × duty cycle | Context ("typical" peak) |
+| Fixed / flexible split | worst case of fixed vs flexible appliances | Shows how much of the peak the scheduler could move |
+
+Consecutive flagged steps become **windows**; a window touching both 23:45 and 00:00
+is merged across midnight. Episodes found per day:
+
+- **Violations**: worst case > load limit (exactly at the limit is fine).
+- **High demand**: ≥ 80% of the limit (or of the day's peak without a limit).
+- **Overlaps**: ≥ 2 appliances of ≥ 1 kW on together.
+- **Conflicts**: ≥ 2 appliances marked "not simultaneous" on together.
+
+`GET /api/peak-load/analysis` without a weekday analyses the day with the highest peak.

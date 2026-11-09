@@ -1,6 +1,6 @@
 # User Guide
 
-*Covers features available now. Last updated: Stage 3.*
+*Covers features available now. Last updated: Stage 4.*
 
 All numbers PowerShift shows are **estimates** calculated from what you enter.
 PowerShift does not connect to a meter and does not measure anything.
@@ -122,6 +122,29 @@ fixed charges and taxes appear in the bill estimate. With a slab tariff, a singl
 or appliance's cost uses the month's average rate, since slab prices depend on the
 monthly total. The note box at the bottom of the page lists these assumptions.
 
+## 5. Peak Load
+
+Energy (kWh) is what you pay for. **Demand (kW)** is how hard your connection is pushed
+at one moment. Your load limit is about demand: run the water heater, AC and dishwasher
+together and you may exceed it even if your monthly energy is modest.
+
+The page shows one day at a time (it opens on the day with the highest peak; pick
+another day with the buttons or by clicking a bar in **Peak by day**):
+
+- **Peak demand (worst case)**: every appliance that is on at full power at the same
+  moment. Used for limit warnings, because a breaker reacts to the highest instant.
+- **Expected peak**: using duty cycles; the typical highest demand.
+- **Headroom / Time over limit**: how close you are to your household load limit.
+- **A red alert** lists each period over the limit, by how much, and what is running.
+- **24-hour load profile**: demand in 15-minute steps, fixed (blue) and flexible (orange),
+  with your limit as a dashed line. Hover to see what is on.
+- **At the peak**: the appliances running at the highest moment.
+- **High-demand periods** (≥ 80% of the limit), **heavy appliances overlapping**
+  (1 kW or more each) and **not allowed together** (appliances you marked as not
+  simultaneous that currently overlap).
+
+Only the flexible part of a peak can be moved; the Smart Scheduler (next stage) does that.
+
 ## Overview
 
 Shows this month's estimated energy, bill, average per day and the share of energy
@@ -135,5 +158,4 @@ Use the switch at the bottom of the sidebar to choose **Light**, **Dark** or
 
 ## Not available yet
 
-Peak load analysis, the smart scheduler, simulations, reports and backups are added
-in later stages. Their pages say "Not built yet".
+The smart scheduler, simulations, reports and backups are added in later stages. Their pages say "Not built yet".
