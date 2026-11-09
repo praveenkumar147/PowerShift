@@ -1,0 +1,69 @@
+@import 'tailwindcss';
+
+/* Dark mode follows a `.dark` class on <html>, set by ThemeProvider. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. Components use semantic names (bg-surface, text-muted…) instead of
+ * raw colours, so light/dark themes only change these variables.
+ * System font stack: offline, and Segoe UI Variable on Windows 11.
+ */
+@theme {
+  --font-sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
+
+  --color-canvas: var(--ps-canvas);
+  --color-surface: var(--ps-surface);
+  --color-surface-raised: var(--ps-surface-raised);
+  --color-border: var(--ps-border);
+  --color-fg: var(--ps-fg);
+  --color-muted: var(--ps-muted);
+  --color-accent: var(--ps-accent);
+  --color-accent-fg: var(--ps-accent-fg);
+  --color-accent-soft: var(--ps-accent-soft);
+  --color-success: var(--ps-success);
+  --color-warning: var(--ps-warning);
+  --color-danger: var(--ps-danger);
+}
+
+:root {
+  --ps-canvas: #f4f6f8;
+  --ps-surface: #ffffff;
+  --ps-surface-raised: #f8fafb;
+  --ps-border: #e1e6eb;
+  --ps-fg: #16202a;
+  --ps-muted: #5d6b78;
+  --ps-accent: #0f766e;
+  --ps-accent-fg: #ffffff;
+  --ps-accent-soft: #e3f3f1;
+  --ps-success: #15803d;
+  --ps-warning: #b45309;
+  --ps-danger: #b91c1c;
+  color-scheme: light;
+}
+
+.dark {
+  --ps-canvas: #0d1318;
+  --ps-surface: #141c23;
+  --ps-surface-raised: #1a242d;
+  --ps-border: #26323d;
+  --ps-fg: #e6edf3;
+  --ps-muted: #8d9aa6;
+  --ps-accent: #2dd4bf;
+  --ps-accent-fg: #062a26;
+  --ps-accent-soft: #123230;
+  --ps-success: #4ade80;
+  --ps-warning: #fbbf24;
+  --ps-danger: #f87171;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-canvas text-fg font-sans antialiased;
+}

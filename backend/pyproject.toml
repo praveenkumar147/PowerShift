@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "powershift-backend"
+description = "Local backend for PowerShift: household energy calculation and schedule optimization."
+requires-python = ">=3.13,<3.14"
+dynamic = ["version"]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.32",
+    "pydantic>=2.9",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "httpx>=0.28",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "powershift.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["powershift*"]
+
+[tool.setuptools.package-data]
+powershift = ["db/migrations/script.py.mako", "db/migrations/versions/*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+filterwarnings = ["error::DeprecationWarning:powershift.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = []
+exclude = ["powershift/db/migrations/versions/"]
