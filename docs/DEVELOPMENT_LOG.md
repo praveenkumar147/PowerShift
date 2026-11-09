@@ -41,7 +41,7 @@
 - Theme preference is stored in localStorage for now; it moves to `app_settings` in the Settings stage.
 - `httpx2` (suggested by a Starlette deprecation warning) was not adopted; it needs evaluation first.
 
-## Stage 2 — Household profile and appliance management (2026-11-09) ✅ complete, awaiting approval
+## Stage 2 — Household profile and appliance management (2026-11-09) ✅ approved
 
 ### Design decisions
 - **Times as minutes since midnight** in 15-minute steps; an end ≤ start wraps past midnight. Converts directly to hourly or 15-minute scheduling slots later.
@@ -70,3 +70,38 @@
 - `app_settings` (theme, default optimization goal) is not exposed through the API yet; the theme stays in localStorage until the Settings stage.
 - Priority, preferred window, contiguity and "allow simultaneous" are stored and validated, but only take effect when the scheduler is built (Stage 5).
 - The dev database at `backend/.data/` now contains sample entries made during browser testing ("Demo home", Refrigerator, Washing machine, Water heater).
+
+## Stage 3 — Tariff and energy engine (2026-11-09) ✅ complete, awaiting approval
+
+### Design decisions
+- **Typical-week model**: each appliance gets 96 fifteen-minute average-kW values per weekday. Any period = number of each weekday in it x that weekday's values. Fast and exact for a repeating routine.
+- **Tariff structures**: flat, time-of-use (every day, or weekday + weekend sets, each covering 24 h exactly once), slab (telescopic or whole-usage), plus fixed-monthly, per-kWh and percentage charges. Nothing is hard-coded; the only built-in rates are in clearly labelled sample data.
+- **Money as `Decimal`** end to end; stored as `NUMERIC(14,4)`.
+- **Bill rounding**: each printed line rounded to 2 decimals; percentages apply to the sum of printed lines, so the bill can be re-checked with a calculator.
+- **Slab tariffs** price the monthly household total; per-day and per-appliance costs use the month's average rate, and the report says so.
+- **One active tariff**, enforced by a partial unique index; the first tariff created becomes active.
+- **Charts**: Recharts with two validated series colours (colour-blind separation and contrast checked by script in both themes), one measure per chart (no dual axes), horizontal bars for breakdowns, a data table behind every chart.
+
+### Deviations from the Stage 0 plan
+- Deleting the active tariff is allowed (plan said 409), because a 409 would make a household's only tariff impossible to delete; costs simply show as unavailable.
+- `/api/energy/summary` and `/api/energy/appliance-breakdown` became one `/api/energy/report`, so totals and breakdowns always come from the same calculation; `/monthly` and `/bill` were added.
+- Calculation snapshots (saved history of estimates) are deferred to the Reports stage.
+
+### Built
+- Backend: `domain/tariff.py`, `calculation/{load_profile,tariff_engine,energy_model}.py`, tariff repository/service/API, energy service/API, sample-data service/API, migration `0003`.
+- Frontend: Electricity Tariff page (cards, editor with flat/TOU/slab/charges, activate, delete), Energy Analysis page (filters, headline tiles, daily chart, appliance and category breakdowns, hourly profile, monthly projection, itemised bill, assumptions), Overview dashboard (month tiles, hourly profile) and "Load sample data".
+
+### Verified
+- 148 backend, 60 frontend and 6 Rust tests pass; ruff, mypy (strict), tsc (strict) and ESLint are clean; production build succeeds.
+- Live against a fresh database: sample data loaded; Overview showed 511.35 kWh and a Rs 3,317.48 bill for November; the hourly chart's 07:00 spike is the 3 kW water heater; appliance totals matched hand calculations (air conditioner 0.9 kW x 7 h x 30 = 189 kWh); the bill re-adds by hand.
+
+### Problems met and fixed
+- **Bill not checkable by hand**: a 5% duty was computed on the unrounded subtotal (157.97 instead of 5% of the printed 3,159.50 = 157.98). Changed to round lines first; added a regression test.
+- The "kWh" unit was repeated on every y-axis tick and wrapped; now stated once above each chart.
+- Breakdown bar labels wrapped in the narrow category card; gave labels more room.
+- During the live check, navigating within the single-page app kept cached data; a real reload confirmed the fix (not a code issue).
+
+### Not done / deferred
+- Bundle size warning (810 kB, 241 kB gzipped), mostly Recharts; code splitting in Stage 8.
+- Holidays, seasons and real meter data are not modelled.
+- The main dev database (`backend/.data/`) still has the Stage 2 test entries and no tariff; the sample-data check used a separate test database that was deleted afterwards.

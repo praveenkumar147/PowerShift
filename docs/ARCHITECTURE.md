@@ -1,6 +1,6 @@
 # Architecture
 
-*Describes what is implemented. Last updated: Stage 2.*
+*Describes what is implemented. Last updated: Stage 3.*
 
 ## Overview
 
@@ -39,7 +39,7 @@
 | `schemas/` | Pydantic request/response models; per-field checks (types, ranges, 15-minute steps) | domain, calculation |
 | `services/` | Use cases: validate, persist, attach estimates and warnings. One request = one transaction | domain, calculation, db, schemas |
 | `domain/` | Pure dataclasses and rules (`ApplianceSpec`, `TimeWindow`, `validate_appliance`) | — |
-| `calculation/` | Pure formulas (`appliance_energy.py`) | domain |
+| `calculation/` | Pure formulas: `appliance_energy.py` (rated vs average power), `load_profile.py` (96 × 15-minute average-kW profile per appliance per weekday), `tariff_engine.py` (step prices, slabs, itemised bill), `energy_model.py` (periods, months, hours) | domain |
 | `optimization/` | CP-SAT scheduler *(Stage 5)* | domain, calculation |
 | `db/models/` | SQLAlchemy tables | domain (enum values for CHECK constraints) |
 | `db/repositories/` | Queries, plus conversion between rows and domain objects | db/models, domain |
@@ -93,3 +93,33 @@ so the UI shows each message next to the right input.
 - Server state uses TanStack Query. Components don't call `fetch` directly; they use typed hooks in `src/api/`.
 - Colours are semantic design tokens (CSS variables) in `src/index.css`, switched by a `.dark` class.
 - Modules that aren't built yet show an honest "Not built yet" page with no fake data and no buttons.
+
+## Energy and cost calculation pipeline
+
+```
+appliance settings ──► load_profile ──► 7 weekday profiles per appliance (96 steps of average kW)
+                                              │
+active tariff ──► tariff_engine.step_prices ──┤  (price per step; none for slab tariffs)
+                                              ▼
+                                   energy_model.EnergyModel
+             precomputes, per appliance per weekday: kWh, and kWh × price (flat/TOU)
+                                              │
+     any period = Σ over weekdays (number of that weekday in the period × its values)
+                                              │
+       ┌────────────────────┬─────────────────┼──────────────────┬───────────────────┐
+  period report      hourly profile    monthly projection    monthly bill (tariff_engine.compute_bill)
+```
+
+- Energy uses **average power** (rated × quantity × duty cycle); every value is an estimate.
+- Money is `Decimal` end to end; each printed bill line is rounded to 2 decimals, and
+  percentages apply to the sum of the printed lines, so the bill can be checked by hand.
+- Slab tariffs price the **monthly household total**; individual appliances and days are
+  priced at that month's average energy rate (stated in the report notes).
+
+## Frontend data flow
+
+- Server data is cached by TanStack Query under keys: `appliances`, `household`, `tariffs`, `energy`.
+- Any change to appliances, tariffs, the household or sample data invalidates the `energy`
+  queries, so every chart recalculates from the backend.
+- Charts (Recharts) each have a "Show data table" view; colours are CSS tokens
+  (`--ps-series-1/2`) validated for colour-blind separation and contrast in both themes.

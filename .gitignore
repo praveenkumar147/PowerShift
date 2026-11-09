@@ -11,6 +11,7 @@ src-tauri/gen/schemas/
 # Python / backend
 backend/.venv/
 backend/.data/
+backend/.data-*/
 backend/build/
 backend/dist/
 __pycache__/

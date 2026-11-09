@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiClient } from '@/api/BackendProvider';
 import type { Appliance, ApplianceFilters, ApplianceInput } from '@/features/appliances/types';
+import { energyQueryKey } from '@/features/tariffs/api';
 
 export const appliancesQueryKey = ['appliances'] as const;
 
@@ -23,24 +24,34 @@ export function useAppliances(filters: ApplianceFilters) {
   });
 }
 
+/** Appliance changes affect the list and every energy figure. */
+function useInvalidateApplianceData() {
+  const queryClient = useQueryClient();
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: appliancesQueryKey }),
+      queryClient.invalidateQueries({ queryKey: energyQueryKey }),
+    ]);
+}
+
 /** Creates when `id` is null, otherwise replaces the appliance. */
 export function useSaveAppliance(id: number | null) {
   const client = useApiClient();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateApplianceData();
   return useMutation({
     mutationFn: (input: ApplianceInput) =>
       id === null
         ? client.send<Appliance>('POST', '/api/appliances', input)
         : client.send<Appliance>('PUT', `/api/appliances/${id}`, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: appliancesQueryKey }),
+    onSuccess: invalidate,
   });
 }
 
 export function useDeleteAppliance() {
   const client = useApiClient();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateApplianceData();
   return useMutation({
     mutationFn: (id: number) => client.send<undefined>('DELETE', `/api/appliances/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: appliancesQueryKey }),
+    onSuccess: invalidate,
   });
 }

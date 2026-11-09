@@ -4,9 +4,9 @@ An offline-first Windows desktop app for estimating household electricity use an
 cost, analysing peak demand, and generating optimized appliance schedules with
 Google OR-Tools (CP-SAT).
 
-> **Status: Stage 2 complete.** Household profile and appliance management
-> (fixed and flexible appliances, validation, per-appliance energy estimates) work.
-> Tariffs and energy analysis come next in Stage 3.
+> **Status: Stage 3 complete.** Household profile, appliance management, configurable
+> tariffs (flat, time-of-use, slab, extra charges and taxes), itemised monthly bill
+> estimates and energy analysis charts work. Peak load analysis comes next in Stage 4.
 > See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 All data stays on your computer. There are no accounts, cloud services or external APIs.
@@ -15,7 +15,7 @@ All data stays on your computer. There are no accounts, cloud services or extern
 
 | Layer | Technology |
 |---|---|
-| UI | React 19, TypeScript (strict), Vite, Tailwind CSS 4, React Router, TanStack Query, Lucide icons |
+| UI | React 19, TypeScript (strict), Vite, Tailwind CSS 4, React Router, TanStack Query, Recharts, Lucide icons |
 | Desktop shell | Tauri 2 (Rust) |
 | Backend | Python 3.13, FastAPI, Pydantic, SQLAlchemy 2, Alembic |
 | Database | SQLite (one local file) |
@@ -104,4 +104,6 @@ See [docs/TESTING.md](docs/TESTING.md).
 ## Known limitations
 
 - Packaging as a Windows installer is not set up yet (Stage 9).
+- The frontend bundle is about 810 kB (241 kB gzipped), mostly the chart library; code splitting is planned for Stage 8.
+- Holidays and seasonal changes are not modelled: every Monday follows the same routine.
 - All energy figures will be estimates from user-entered data, not measurements.

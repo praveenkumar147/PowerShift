@@ -46,6 +46,15 @@ describe('App shell', () => {
     expect(within(nav).getByRole('link', { name: 'Smart Scheduler' })).toHaveAttribute('aria-current', 'page');
   });
 
+  it('loads labelled sample data from the empty overview', async () => {
+    const backend = installFakeBackend();
+    renderApp();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Load sample data' }));
+
+    expect(backend.requests.some((r) => r.method === 'POST' && r.path === '/api/demo')).toBe(true);
+  });
+
   it('guides a new user to set up the household first', async () => {
     installFakeBackend();
     renderApp();

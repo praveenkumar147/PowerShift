@@ -1,6 +1,6 @@
 # Testing
 
-*Last updated: Stage 2. Totals: 78 backend, 39 frontend, 6 Rust.*
+*Last updated: Stage 3. Totals: 148 backend, 60 frontend, 6 Rust.*
 
 ## How to run
 
@@ -28,7 +28,15 @@
 | `integration/test_household_api.py` | `null` before setup; save and read; second save updates the same row; trimming and uppercasing; each invalid field reported |
 | `integration/test_appliances_api.py` | Full CRUD; flexible settings round-trip; sorting, search, filters, wildcard escaping; update replaces child rows; switching modes removes flexible settings; delete cascades; duplicate names (any case) → 409; 13 field-validation cases; cross-field errors by field path; invalid input never saved; load-limit warning |
 
-The fixtures in `tests/factories.py` are test data, not product data.
+| `unit/test_tariff_rules.py` | Each type needs its own fields only; TOU gaps and overlaps reported with the time; overnight periods; weekday/weekend sets each cover the day; no mixing "every day" with weekday sets; slab limits increase and only the last is open |
+| `unit/test_tariff_engine.py` | Hand-worked bills: flat + fixed + per-kWh + 5% duty = 1155.00; several percentages on the same subtotal; **percentages apply to the printed (rounded) subtotal**; total equals the sum of printed lines; slabs at 80/100/150/250/0 kWh in both slab modes; slab breakdown text; TOU step prices including weekday vs weekend |
+| `unit/test_energy_model.py` | Weekday counting vs a day-by-day count (incl. leap year and year boundary); November 2026 = 62.7 kWh; daily TOU charge 18.96 / 6.96 by hand; moving the washer off-peak cuts its charge from 12.00 to 4.50; appliance breakdown; category filter; no tariff gives energy but no cost; slab average-rate allocation sums to the bill; range across two months; invalid ranges; hourly profile for a day and the weekly average; 12-month projection |
+| `integration/test_tariffs_api.py` | First tariff becomes active; activation switches; exact decimals; update replaces children; deleting the active tariff; 404s; 8 invalid-tariff cases with field paths; TOU gap message |
+| `integration/test_energy_api.py` | Report with and without a tariff; rounding; category filter; reversed/oversized/garbage date ranges give 422; hourly profile; monthly projection equals the bill; slab note; empty household |
+| `integration/test_demo_api.py` | Sample data loads and is labelled; produces a 4-line bill; refuses (409) when any real data exists or when loaded twice |
+
+The fixtures in `tests/factories.py` are test data, not product data. Tariff rates
+in tests are invented round numbers chosen to make hand arithmetic easy.
 
 ### Frontend
 
@@ -42,6 +50,11 @@ The fixtures in `tests/factories.py` are test data, not product data.
 | `features/appliances/formModel.test.ts` | Form ↔ API conversion (duty % → fraction, overnight windows, durations); mode switching drops the other mode's data; parse errors use backend field paths; preferred times only required when switched on |
 | `features/appliances/AppliancesPage.test.tsx` | Empty state; list shows usage, days, estimates and warnings; create fixed and flexible (overnight) appliances; client-side checks block bad submissions; backend rule errors shown next to the field; 409 conflict; edit pre-fills and sends PUT; delete needs confirmation and focuses Cancel; Escape closes; search/filter/clear |
 | `features/household/HouseholdForm.test.tsx` | Create from empty form; pre-fill and show per-field server errors; required fields checked before sending |
+
+| `lib/dates.test.ts` | Local-date parsing, month/year ranges incl. leap years, labels |
+| `features/tariffs/formModel.test.ts` | Flat/TOU/slab conversion, overnight periods, empty slab limit means "no limit", parse errors with backend field paths |
+| `features/tariffs/TariffsPage.test.tsx` | "Never assumes rates" empty state; cards show rates in the household currency; create flat tariff with a charge; TOU payload and backend coverage error; switching the active tariff; warning before deleting the active tariff |
+| `features/energy/EnergyPage.test.tsx` | Headline tiles; data tables behind charts; itemised bill; calculation notes; filters sent to the API; "No tariff" state; range error shown on the date field |
 
 UI tests run against `src/test/fakeBackend.ts`, a small in-memory stand-in for the API,
 so they test the UI's behaviour without depending on the order of requests.

@@ -6,7 +6,9 @@
 import { vi } from 'vitest';
 import type { HealthResponse } from '@/api/health';
 import type { Appliance, ApplianceInput } from '@/features/appliances/types';
+import type { BillEstimate, EnergyReport, HourlyProfile, MonthlyProjection } from '@/features/energy/types';
 import type { Household } from '@/features/household/api';
+import type { Tariff, TariffInput } from '@/features/tariffs/types';
 
 export const HEALTH: HealthResponse = {
   status: 'ok',
@@ -30,9 +32,19 @@ interface Override {
   body: unknown;
 }
 
+/** Canned energy responses; the real calculations are tested in the backend. */
+export interface EnergyFixtures {
+  report?: EnergyReport;
+  hourly?: HourlyProfile;
+  monthly?: MonthlyProjection;
+  bill?: BillEstimate;
+}
+
 export interface FakeBackend {
   household: Household | null;
   appliances: Appliance[];
+  tariffs: Tariff[];
+  energy: EnergyFixtures;
   requests: Array<{ method: string; path: string; body: unknown }>;
   /** Make the next matching request fail (or return a custom body). */
   respondOnce: (method: string, path: string, status: number, body: unknown) => void;
@@ -45,12 +57,16 @@ function json(body: unknown, status = 200): Response {
 
 const notFound = () => json({ error: { code: 'not_found', message: 'Not Found', fields: {} } }, 404);
 
-export function installFakeBackend(initial: Partial<Pick<FakeBackend, 'household' | 'appliances'>> = {}): FakeBackend {
+type Initial = Partial<Pick<FakeBackend, 'household' | 'appliances' | 'tariffs' | 'energy'>>;
+
+export function installFakeBackend(initial: Initial = {}): FakeBackend {
   const overrides: Override[] = [];
   let nextId = 100;
   const backend: FakeBackend = {
     household: initial.household ?? null,
     appliances: initial.appliances ?? [],
+    tariffs: initial.tariffs ?? [],
+    energy: initial.energy ?? {},
     requests: [],
     respondOnce: (method, path, status, body) => overrides.push({ method, path, status, body }),
   };
@@ -83,6 +99,12 @@ export function installFakeBackend(initial: Partial<Pick<FakeBackend, 'household
       backend.appliances.push(created);
       return json(created, 201);
     }
+    const tariffResponse = handleTariffs(method, path, body);
+    if (tariffResponse) return tariffResponse;
+    const energyResponse = handleEnergy(path);
+    if (energyResponse) return energyResponse;
+    if (path === '/api/demo' && method === 'POST') return json({ appliances: 9, tariffs: 1 }, 201);
+
     const match = /^\/api\/appliances\/(\d+)$/.exec(path);
     if (match) {
       const id = Number(match[1]);
@@ -101,6 +123,45 @@ export function installFakeBackend(initial: Partial<Pick<FakeBackend, 'household
       return json(existing);
     }
     return notFound();
+  }
+
+  function handleTariffs(method: string, path: string, body: unknown): Response | null {
+    if (path === '/api/tariffs' && method === 'GET') return json(backend.tariffs);
+    if (path === '/api/tariffs' && method === 'POST') {
+      const created: Tariff = { ...(body as TariffInput), id: nextId++, is_active: backend.tariffs.length === 0 };
+      backend.tariffs.push(created);
+      return json(created, 201);
+    }
+    const match = /^\/api\/tariffs\/(\d+)(\/activate)?$/.exec(path);
+    if (!match) return null;
+    const id = Number(match[1]);
+    const existing = backend.tariffs.find((t) => t.id === id);
+    if (!existing) return notFound();
+    if (match[2] && method === 'POST') {
+      backend.tariffs = backend.tariffs.map((t) => ({ ...t, is_active: t.id === id }));
+      return json({ ...existing, is_active: true });
+    }
+    if (method === 'DELETE') {
+      backend.tariffs = backend.tariffs.filter((t) => t.id !== id);
+      return json(null, 204);
+    }
+    if (method === 'PUT') {
+      const updated = { ...existing, ...(body as TariffInput) };
+      backend.tariffs = backend.tariffs.map((t) => (t.id === id ? updated : t));
+      return json(updated);
+    }
+    return json(existing);
+  }
+
+  function handleEnergy(path: string): Response | null {
+    const fixtures: Record<string, unknown> = {
+      '/api/energy/report': backend.energy.report,
+      '/api/energy/hourly-profile': backend.energy.hourly,
+      '/api/energy/monthly': backend.energy.monthly,
+      '/api/energy/bill': backend.energy.bill,
+    };
+    if (!(path in fixtures)) return null;
+    return fixtures[path] === undefined ? notFound() : json(fixtures[path]);
   }
 
   vi.stubGlobal(

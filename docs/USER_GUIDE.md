@@ -1,6 +1,6 @@
 # User Guide
 
-*Covers features available now. Last updated: Stage 2.*
+*Covers features available now. Last updated: Stage 3.*
 
 All numbers PowerShift shows are **estimates** calculated from what you enter.
 PowerShift does not connect to a meter and does not measure anything.
@@ -12,6 +12,13 @@ the local calculation engine and database start. No internet connection is neede
 
 If the engine can't start, you'll see the reason and a **Try again** button. A
 detailed log is in the `logs` folder inside the app data folder.
+
+## Trying it with sample data
+
+On a brand-new install, the Overview offers **Load sample data**. It creates a
+"Sample household (demo data)", nine typical appliances and a sample time-of-use tariff
+with **invented rates, not a real utility's prices**. It only works when the database is
+empty, so it never mixes with your own data.
 
 ## 1. Set up your household (Settings)
 
@@ -76,11 +83,50 @@ and estimated energy per day. A ⚠ warning appears when one appliance alone wou
 your household load limit. Use the search box and filters to narrow the list.
 **Edit** (pencil) and **Delete** (bin) are on each row; deleting asks for confirmation.
 
+## 3. Enter your tariff (Electricity Tariff)
+
+Click **Add tariff** and copy the rates from your bill or your utility's published tariff.
+PowerShift never assumes rates from your location.
+
+| Type | When to use | What you enter |
+|---|---|---|
+| **Flat rate** | One price at all times | Price per kWh |
+| **Time of use** | Price changes during the day | Periods with a price each. They must cover all 24 hours exactly once, either every day or separately for weekdays and weekends. 22:00 to 06:00 runs overnight. |
+| **Slab-based** | Price depends on monthly usage | Bands such as 0-100 kWh, 100-200 kWh, and "above" (leave the last limit empty). Choose whether each band is charged at its own rate (most common) or all units at the rate of the highest band reached. |
+
+**Additional charges** are added after the energy charge:
+- *Fixed per month*, e.g. meter rent.
+- *Extra per kWh*, e.g. a fuel surcharge.
+- *Percentage*, e.g. electricity duty or tax, applied to the subtotal of the lines above.
+
+You can keep several tariffs; **Use this tariff** chooses which one is used for costs.
+
+> Under a flat or slab tariff, running an appliance at a different time does not change
+> the bill, because the total kWh are the same. Only time-of-use tariffs reward shifting.
+
+## 4. Energy Analysis
+
+Choose a date range (up to a year) and optionally a category. You'll see:
+
+- **Headline figures**: total energy, average per day, energy charge, largest consumer.
+- **Daily consumption**: days with flexible appliances (e.g. washing days) stand out.
+- **By appliance / By category**: switch between energy and cost.
+- **Hourly profile**: fixed (baseline) and flexible load through a typical day, or a chosen weekday.
+- **Monthly projection**: energy per month for the year.
+- **Bill estimate**: an itemised bill for any month, including fixed charges and taxes.
+
+Every chart has **Show data table** for the exact numbers.
+
+**Reading the costs.** Costs on charts and per appliance are *energy charges only*;
+fixed charges and taxes appear in the bill estimate. With a slab tariff, a single day's
+or appliance's cost uses the month's average rate, since slab prices depend on the
+monthly total. The note box at the bottom of the page lists these assumptions.
+
 ## Overview
 
-Shows your household's occupants and load limit, how many fixed and flexible
-appliances you have, and the local engine status (version, database schema, database
-file location).
+Shows this month's estimated energy, bill, average per day and the share of energy
+that comes from flexible appliances (what a scheduler could shift), plus the hourly
+profile, your household summary, and the local engine status.
 
 ## Theme
 
@@ -89,6 +135,5 @@ Use the switch at the bottom of the sidebar to choose **Light**, **Dark** or
 
 ## Not available yet
 
-Electricity tariffs, cost estimates, energy charts, peak load analysis, the smart
-scheduler, simulations, reports and backups are added in later stages. Their pages
-say "Not built yet".
+Peak load analysis, the smart scheduler, simulations, reports and backups are added
+in later stages. Their pages say "Not built yet".

@@ -1,6 +1,6 @@
 # Database Design
 
-*Describes the schema that exists now. Last updated: Stage 2 (revision `0002`).*
+*Describes the schema that exists now. Last updated: Stage 3 (revision `0003`).*
 The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-database-design).
 
 ## Engine
@@ -17,6 +17,7 @@ The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-data
 |---|---|
 | `0001` | `household`, `app_settings` |
 | `0002` | `appliances`, `appliance_operating_days`, `appliance_usage_blocks`, `appliance_flex_constraints` |
+| `0003` | `tariffs`, `tariff_periods`, `tariff_slabs`, `tariff_charges` |
 
 - Alembic scripts live in `backend/powershift/db/migrations/versions/`.
 - The backend upgrades the database to the latest revision automatically at startup.
@@ -113,6 +114,52 @@ Blocks of one appliance must not overlap (checked in `domain/appliance.py`).
 | current_start_minute | INTEGER | 0–1439; the user's current habit, the baseline for savings |
 | preferred_start_minute, preferred_end_minute | INTEGER NULL | both set or both NULL (CHECK) |
 | must_be_contiguous | BOOLEAN | |
+
+### `tariffs`
+
+| Column | Type | Rules |
+|---|---|---|
+| id | INTEGER PK | |
+| name | VARCHAR(100) | |
+| tariff_type | VARCHAR(10) | `flat`, `tou`, `slab` |
+| effective_date | DATE | informational |
+| flat_rate_per_kwh | NUMERIC(14,4) NULL | ≥ 0; set only for `flat` |
+| slab_mode | VARCHAR(15) | `telescopic` (each slab at its own rate) or `whole_usage` (all units at the highest slab reached) |
+| is_active | BOOLEAN | partial unique index `uq_tariffs_single_active ... WHERE is_active = 1`: at most one active tariff |
+| created_at, updated_at | DATETIME (UTC) | |
+
+Money columns use `NUMERIC(14,4)` and Python `Decimal`, never floats.
+
+### `tariff_periods` (time-of-use)
+
+| Column | Type | Rules |
+|---|---|---|
+| id | INTEGER PK | |
+| tariff_id | FK → tariffs.id, ON DELETE CASCADE | indexed |
+| position | INTEGER | display order |
+| day_type | VARCHAR(10) | `all`, `weekday` (Mon–Fri), `weekend` (Sat–Sun) |
+| start_minute / end_minute | INTEGER | as for appliance windows; may wrap midnight |
+| rate_per_kwh | NUMERIC(14,4) | ≥ 0 |
+
+Rule (checked in `domain/tariff.py`): either `all` periods alone, or `weekday` + `weekend`
+sets; each set must cover every 15 minutes of the day exactly once.
+
+### `tariff_slabs`
+
+| Column | Type | Rules |
+|---|---|---|
+| id, tariff_id, position | | as above |
+| up_to_kwh | NUMERIC(14,3) NULL | > 0; increasing; NULL only on the last slab ("and above") |
+| rate_per_kwh | NUMERIC(14,4) | ≥ 0 |
+
+### `tariff_charges`
+
+| Column | Type | Rules |
+|---|---|---|
+| id, tariff_id, position | | as above |
+| kind | VARCHAR(15) | `fixed_monthly`, `per_kwh`, `percentage` |
+| label | VARCHAR(100) | |
+| amount | NUMERIC(14,4) | ≥ 0; ≤ 100 for `percentage` |
 
 ### Why separate child tables instead of JSON columns?
 

@@ -39,6 +39,10 @@
   --ps-success: #15803d;
   --ps-warning: #b45309;
   --ps-danger: #b91c1c;
+  /* Chart series (validated for colour-vision deficiency and contrast, both themes). */
+  --ps-series-1: #2a78d6; /* blue: fixed load, single-series charts */
+  --ps-series-2: #eb6834; /* orange: flexible load */
+  --ps-grid: #e6eaee;
   color-scheme: light;
 }
 
@@ -55,6 +59,9 @@
   --ps-success: #4ade80;
   --ps-warning: #fbbf24;
   --ps-danger: #f87171;
+  --ps-series-1: #3987e5;
+  --ps-series-2: #d95926;
+  --ps-grid: #233039;
   color-scheme: dark;
 }
 
