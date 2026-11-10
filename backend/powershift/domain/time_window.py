@@ -64,6 +64,10 @@ def windows_overlap(windows: Iterable[TimeWindow]) -> bool:
     return False
 
 
-def format_minute(minute: int) -> str:
-    """1320 -> '22:00', 1440 -> '24:00' (used in error messages)."""
-    return f"{minute // 60:02d}:{minute % 60:02d}"
+def format_minute(minute: int, twelve_hour: bool = False) -> str:
+    """1320 -> '22:00' (or '10:00 PM'); 1440 -> '24:00' (or '12:00 AM')."""
+    hours, minutes = divmod(minute, 60)
+    if not twelve_hour:
+        return f"{hours:02d}:{minutes:02d}"
+    suffix = "AM" if hours % 24 < 12 else "PM"
+    return f"{hours % 12 or 12}:{minutes:02d} {suffix}"

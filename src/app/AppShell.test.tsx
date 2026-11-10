@@ -39,11 +39,11 @@ describe('App shell', () => {
     renderApp();
     const nav = await screen.findByRole('navigation', { name: 'Main' });
 
-    await userEvent.click(within(nav).getByRole('link', { name: 'Smart Scheduler' }));
+    await userEvent.click(within(nav).getByRole('link', { name: 'Simulation Lab' }));
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Smart Scheduler' })).toBeInTheDocument();
-    expect(screen.getByText('This module is planned for development Stage 5.')).toBeInTheDocument();
-    expect(within(nav).getByRole('link', { name: 'Smart Scheduler' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('heading', { level: 1, name: 'Simulation Lab' })).toBeInTheDocument();
+    expect(screen.getByText('This module is planned for development Stage 6.')).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Simulation Lab' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('loads labelled sample data from the empty overview', async () => {

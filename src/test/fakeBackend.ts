@@ -9,6 +9,7 @@ import type { Appliance, ApplianceInput } from '@/features/appliances/types';
 import type { BillEstimate, EnergyReport, HourlyProfile, MonthlyProjection } from '@/features/energy/types';
 import type { Household } from '@/features/household/api';
 import type { PeakLoadAnalysis } from '@/features/peak-load/types';
+import type { OptimizationRequest, OptimizationRun } from '@/features/scheduler/types';
 import type { Tariff, TariffInput } from '@/features/tariffs/types';
 
 export const HEALTH: HealthResponse = {
@@ -48,6 +49,10 @@ export interface FakeBackend {
   appliances: Appliance[];
   tariffs: Tariff[];
   energy: EnergyFixtures;
+  /** Stored optimization runs, oldest first. */
+  runs: OptimizationRun[];
+  /** Builds the result of the next POST /api/optimization/run (id is assigned by the fake). */
+  solve?: (request: OptimizationRequest) => OptimizationRun;
   requests: Array<{ method: string; path: string; body: unknown }>;
   /** Make the next matching request fail (or return a custom body). */
   respondOnce: (method: string, path: string, status: number, body: unknown) => void;
@@ -60,7 +65,7 @@ function json(body: unknown, status = 200): Response {
 
 const notFound = () => json({ error: { code: 'not_found', message: 'Not Found', fields: {} } }, 404);
 
-type Initial = Partial<Pick<FakeBackend, 'household' | 'appliances' | 'tariffs' | 'energy'>>;
+type Initial = Partial<Pick<FakeBackend, 'household' | 'appliances' | 'tariffs' | 'energy' | 'runs' | 'solve'>>;
 
 export function installFakeBackend(initial: Initial = {}): FakeBackend {
   const overrides: Override[] = [];
@@ -70,6 +75,8 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     appliances: initial.appliances ?? [],
     tariffs: initial.tariffs ?? [],
     energy: initial.energy ?? {},
+    runs: initial.runs ?? [],
+    ...(initial.solve ? { solve: initial.solve } : {}),
     requests: [],
     respondOnce: (method, path, status, body) => overrides.push({ method, path, status, body }),
   };
@@ -106,6 +113,8 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     if (tariffResponse) return tariffResponse;
     const energyResponse = handleEnergy(url);
     if (energyResponse) return energyResponse;
+    const optimizationResponse = handleOptimization(method, path, body);
+    if (optimizationResponse) return optimizationResponse;
     if (path === '/api/demo' && method === 'POST') return json({ appliances: 9, tariffs: 1 }, 201);
 
     const match = /^\/api\/appliances\/(\d+)$/.exec(path);
@@ -154,6 +163,36 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
       return json(updated);
     }
     return json(existing);
+  }
+
+  function handleOptimization(method: string, path: string, body: unknown): Response | null {
+    if (path === '/api/optimization/run' && method === 'POST') {
+      if (!backend.solve) return notFound();
+      const run = { ...backend.solve(body as OptimizationRequest), id: nextId++ };
+      backend.runs.push(run);
+      return json(run, 201);
+    }
+    if (path === '/api/optimization/history') {
+      return json(
+        [...backend.runs].reverse().map((r) => ({
+          id: r.id,
+          created_at: r.created_at,
+          priority: r.priority,
+          status: r.status,
+          schedule_valid: r.schedule_valid,
+          solve_time_ms: r.solve_time_ms,
+          moved_count: r.items.filter((i) => i.moved).length,
+          baseline_bill: r.baseline.monthly_bill,
+          optimized_bill: r.optimized?.monthly_bill ?? null,
+          baseline_peak_kw: r.baseline.peak_kw,
+          optimized_peak_kw: r.optimized?.peak_kw ?? null,
+        })),
+      );
+    }
+    const match = /^\/api\/optimization\/(\d+)$/.exec(path);
+    if (!match) return null;
+    const run = backend.runs.find((r) => r.id === Number(match[1]));
+    return run ? json(run) : notFound();
   }
 
   function handleEnergy(url: URL): Response | null {

@@ -19,6 +19,9 @@ interface LoadProfileChartProps {
   appliances: ApplianceInfo[];
   limitKw: number | null;
   timeFormat: TimeFormat;
+  /** Force the y-axis to cover at least this value, so two charts can share a scale. */
+  scaleToKw?: number;
+  compact?: boolean;
 }
 
 /**
@@ -26,10 +29,10 @@ interface LoadProfileChartProps {
  * with the household load limit as a dashed line. Step-shaped areas, because demand
  * changes in jumps when appliances switch on and off.
  */
-export function LoadProfileChart({ steps, appliances, limitKw, timeFormat }: LoadProfileChartProps) {
+export function LoadProfileChart({ steps, appliances, limitKw, timeFormat, scaleToKw = 0, compact = false }: LoadProfileChartProps) {
   const names = new Map(appliances.map((a) => [a.appliance_id, a.name]));
   const peak = Math.max(0, ...steps.map((s) => s.worst_kw));
-  const top = niceCeiling(Math.max(peak, limitKw ?? 0) * HEADROOM_FACTOR);
+  const top = niceCeiling(Math.max(peak, limitKw ?? 0, scaleToKw) * HEADROOM_FACTOR);
 
   const renderTooltip = ({ active, payload }: TooltipProps) => {
     const step = payload?.[0]?.payload as DemandStep | undefined;
@@ -68,7 +71,7 @@ export function LoadProfileChart({ steps, appliances, limitKw, timeFormat }: Loa
         )}
       </div>
       <AxisUnit>kW (worst case)</AxisUnit>
-      <div className="h-72" role="img" aria-label="Step chart of worst-case household demand through the day, with the load limit">
+      <div className={compact ? 'h-48' : 'h-72'} role="img" aria-label="Step chart of worst-case household demand through the day, with the load limit">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={steps} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid {...GRID_PROPS} />

@@ -7,6 +7,7 @@ from powershift.db.models.appliance import (
     ApplianceUsageBlock,
 )
 from powershift.db.models.household import Household
+from powershift.db.models.optimization import OptimizationRun, OptimizationRunItem
 from powershift.db.models.settings import AppSettings
 from powershift.db.models.tariff import Tariff, TariffCharge, TariffPeriod, TariffSlab
 
@@ -17,6 +18,8 @@ __all__ = [
     "ApplianceOperatingDay",
     "ApplianceUsageBlock",
     "Household",
+    "OptimizationRun",
+    "OptimizationRunItem",
     "Tariff",
     "TariffCharge",
     "TariffPeriod",

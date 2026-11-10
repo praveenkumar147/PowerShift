@@ -45,3 +45,10 @@ export function formatDayLong(iso: string): string {
   const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
   return `${weekday} ${date.getDate()} ${monthShort(date.getMonth() + 1)} ${date.getFullYear()}`;
 }
+
+/** ISO timestamp -> "9 Nov 2026, 21:05" in local time. */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getDate()} ${monthShort(date.getMonth() + 1)} ${date.getFullYear()}, ${time}`;
+}
