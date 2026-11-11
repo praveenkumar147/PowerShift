@@ -42,6 +42,18 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class OperationFailedError(AppError):
+    """An operation failed (disk full, file locked...). Nothing was changed."""
+
+    status_code = 500
+    code = "operation_failed"
+
+
+class PayloadTooLargeError(AppError):
+    status_code = 413
+    code = "payload_too_large"
+
+
 class ValidationFailedError(AppError):
     """Input is well-formed but breaks a rule involving several fields."""
 

@@ -1,6 +1,6 @@
 # Database Design
 
-*Describes the schema that exists now. Last updated: Stage 6 (revision `0005`).*
+*Describes the schema that exists now. Last updated: Stage 7 (revision `0005`, no schema change).*
 The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-database-design).
 
 ## Engine
@@ -236,3 +236,17 @@ One row per run. Key numbers are columns (for queries); `result_json` is the ful
 Scenarios are stored as changes (not snapshots), so they follow your real household. Each
 result records the baseline it was compared with; the Simulation Lab warns when results in a
 comparison were calculated on different households.
+
+## Backups and restore (Stage 7)
+
+Stage 7 added **no tables or migrations**. Notes on how the database file is handled:
+
+- A backup is a complete copy of the database made with SQLite's online backup API, written in
+  `journal_mode=DELETE` so it is one file (no `-wal`/`-shm` companions). Names:
+  `manual-`, `pre-restore-`, `pre-reset-` or `pre-migration-<revision>-` followed by a UTC time stamp.
+- A backup is accepted for restore only if it has the required tables and **one** Alembic revision
+  that this version knows. An older revision is restored and then upgraded by the normal migrations;
+  a newer one is refused so an old app never opens a newer schema.
+- Reset deletes rows in foreign-key order (children first) in one transaction; the schema, the
+  `alembic_version` row and the backups folder are untouched.
+- `app_settings` is still unused: the theme remains in the browser's local storage (planned for Stage 8).

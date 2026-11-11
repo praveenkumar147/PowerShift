@@ -198,3 +198,42 @@ Substeps A-L, each tested before the next.
 - The Overview does not show scenario results (Stage 8).
 - Scenario results are for the current calendar month only.
 - Scenarios cannot yet be duplicated with one click.
+
+## Stage 7 — Reports and data management (2026-11-11) ✅ complete, awaiting approval
+
+### Design decisions
+- **A report is data first, file second.** Builders produce one format-neutral `Report`; CSV and PDF are renderers. This keeps the numbers identical in both files and identical to the screens (builders reuse the existing services).
+- **CSV is safe for Excel**: UTF-8 BOM, and any cell starting with `= + - @`, tab or return gets a leading apostrophe so imported text cannot run as a formula.
+- **Backups are validated before they are trusted.** Size, SQLite header, integrity check, required tables, a single known migration revision, foreign-key check. Newer revisions are refused; older ones are upgraded after restore.
+- **Every destructive step makes a safety copy first** (`pre-restore`, `pre-reset`), and the UI tells you its name so the action can be undone.
+- **Check, then confirm.** Restore shows the backup's contents after validation and only then offers "Replace my data". Reset needs the exact word `RESET`.
+- **Raw-body upload** (no multipart library) keeps the dependency list small.
+- **Commit before respond.** Found while testing: FastAPI ran the session's commit after the response had gone out. The session dependency is now `scope="function"`, and a test watches the database at the moment the response starts.
+
+### Deviations from the Stage 0 plan
+- No `PUT /api/settings` for preferences/theme: the theme stays in local storage and moves to the database in Stage 8.
+- Restore takes a stored backup or a raw uploaded file rather than a server-side file path, so the server never opens arbitrary paths.
+- Files reach the user through the browser download mechanism (no native save dialog yet).
+
+### Built
+- Backend: `reports/` (model, CSV, PDF), `services/report_service.py`, `api/reports.py`, `db/backup.py`, `services/data_service.py`, `api/settings.py`, `schemas/data.py`; `OperationFailedError` (500) and `PayloadTooLargeError` (413); CORS exposes `Content-Disposition`.
+- Frontend: Reports page (seven reports, options per report, PDF/CSV), Settings gained Backups, Data and About cards and a restore dialog; `download()`/`upload()` in the API client; the placeholder "pending" page was removed because every section now exists.
+
+### Verified
+- 391 backend, 120 frontend and 6 Rust tests pass; ruff, mypy (strict), tsc (strict) and ESLint are clean; production build succeeds.
+- Live against the real backend with sample data: PDF and CSV exports return real bytes and the browser can read the server's filename; a backup was created; **restore through the UI** after deleting an appliance validated first (data unchanged while checking), then restored all 9 appliances and created a safety copy; **reset through the UI** with `RESET` removed 1 household, 9 appliances, 1 tariff, 1 scenario and 1 run and saved `pre-reset-...`; the raw-upload check accepted that backup and rejected a non-database file (422); the upload restore brought back 9 appliances; `/api/health` stayed `ok`.
+
+### Problems met and fixed
+- Existing `backup_database` left SQLite connections open (Windows file locks) and produced WAL-mode backups that were not self-contained; now closes connections, uses `journal_mode=DELETE` and unique names.
+- Writes were committed after the response (see above).
+- A router module named `settings` shadowed the `settings` argument of `create_app`; imported under another name.
+- mypy: ReportLab has no type stubs (override added); `rowcount` needed a cast.
+- A first PDF table helper was lost by the formatter; found by failing tests.
+- Rewriting four source files with PowerShell re-encoded their non-ASCII characters; found by two failing tests and repaired.
+
+### Not done / deferred, and honest caveats
+- **PDF layout was not looked at.** Tests prove the PDF is valid and its text is extractable; I could not render pages here.
+- **Downloads inside the packaged Tauri window (WebView2) are unverified.** They work in a browser; confirm in Stage 8/9, and switch to a native save dialog if needed.
+- Old backups are never pruned.
+- The Overview does not yet show scheduler/simulation/report information (Stage 8).
+- OPTIMIZATION_MODEL.md is unchanged: Stage 7 does not touch the model.

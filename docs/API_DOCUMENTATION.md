@@ -1,6 +1,6 @@
 # API Documentation
 
-*Lists implemented endpoints only. Last updated: Stage 6.*
+*Lists implemented endpoints only. Last updated: Stage 7.*
 The planned API is in [STAGE0_PLAN.md §7](STAGE0_PLAN.md#7-api-design).
 
 ## Conventions
@@ -398,3 +398,63 @@ or `changes.1.appliance.flexible.run_duration_minutes`; nothing is saved.
 | `items`, `validation`, `diagnostics`, `change_descriptions`, `notes` | as for the Smart Scheduler, plus generated descriptions of each change |
 
 Money is for the current calendar month. All figures are estimates.
+
+## Reports
+
+### `POST /api/reports/export`
+
+Generates a report and returns it as a file (`Content-Disposition: attachment; filename=...`).
+Nothing is stored on the server. The `Content-Disposition` header is exposed to the browser
+through CORS (`expose_headers`), so the UI can use the server's file name.
+
+Body:
+
+```json
+{ "type": "daily_energy", "format": "pdf", "params": { "start": "2026-11-01", "end": "2026-11-30" } }
+```
+
+| Field | Values |
+|---|---|
+| `type` | `daily_energy`, `monthly_energy`, `appliance_consumption`, `bill_estimate`, `peak_load`, `optimization_comparison`, `simulation_comparison` |
+| `format` | `pdf` (`application/pdf`) or `csv` (`text/csv; charset=utf-8`, with a BOM) |
+| `params` | Only the keys a report uses; unknown keys are rejected. `start`, `end`, `category`, `year`, `month`, `weekday`, `run_id`, `scenario_ids` |
+
+Errors: `422` with the field path (`params.end`, `run_id`, `scenario_ids`) for a bad range, a missing
+tariff, or no optimization run / scenario result to report. Default for `run_id` is the latest run;
+default for `scenario_ids` is every scenario that has a result.
+
+## Settings and data management
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/settings/about` | `app_version`, `schema_revision`, `python_version`, `solver`, `data_dir`, `database_path`, `database_size_bytes`, `backups_dir`, `logs_dir`, `counts` |
+| GET | `/api/settings/backups` | Stored backups, newest first: `name`, `kind` (`manual`, `pre-migration`, `pre-restore`, `pre-reset`, `other`), `size_bytes`, `created_at` |
+| POST | `/api/settings/backup` | 201, the new backup's info. Creates `manual-<UTC time>.db` (SQLite online backup, one self-contained file) |
+| GET | `/api/settings/backups/{name}` | Downloads the file. `404` unless the name is a plain `*.db` file name that exists directly inside the backups folder (path traversal such as `..` is refused) |
+| GET | `/api/settings/backups/{name}/check` | Validates a stored backup and returns its summary (see below); changes nothing |
+| POST | `/api/settings/backups/{name}/restore` | Replaces all data with that backup. Returns `{ restored, safety_backup, schema_revision }` |
+| POST | `/api/settings/restore/check` | Body = the raw file bytes (`application/octet-stream`). Same validation, changes nothing |
+| POST | `/api/settings/restore` | Body = the raw file bytes. Same as restoring a stored backup |
+| GET | `/api/settings/export` | All user data as JSON (`powershift-data-export.json`) |
+| POST | `/api/settings/reset` | Body `{"confirm": "RESET"}`; anything else is `422`. Saves `pre-reset-...db` first. Returns `{ removed, safety_backup }` (rows removed per table) |
+
+### Backup validation (restore and check)
+
+A file is rejected with `422` and `fields.file` explaining why unless it: is at most 500 MB
+(`413` above that), starts with the SQLite header, passes `PRAGMA integrity_check`, has every
+required table, has exactly one known Alembic revision (a *newer* one is refused; an *older* one
+is accepted and upgraded after restore, reported as `needs_upgrade`), and passes
+`PRAGMA foreign_key_check`. The uploaded file is only ever read.
+
+Restore copies the backup into the live database with SQLite's backup API, disposes the
+connection pool, then runs migrations. If anything fails after the safety copy was made, the
+error message names that copy.
+
+**Summary object**: `size_bytes`, `schema_revision`, `needs_upgrade`, `household_name`, `appliances`,
+`tariffs`, `scenarios`, `optimization_runs`.
+
+### Write ordering
+
+Every write endpoint commits its transaction **before** the response is sent (the session
+dependency uses `scope="function"`), so a `2xx` always means the data is saved, and a failed commit
+is reported as an error rather than after a success.

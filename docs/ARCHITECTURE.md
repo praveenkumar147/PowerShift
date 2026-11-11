@@ -1,6 +1,6 @@
 # Architecture
 
-*Describes what is implemented. Last updated: Stage 6.*
+*Describes what is implemented. Last updated: Stage 7.*
 
 ## Overview
 
@@ -192,3 +192,45 @@ real household, including independent validation.
 On the frontend, the appliance form accepts `onSubmitInput` so the Simulation Lab reuses it to
 edit scenario appliances without saving them. While it is open the scenario dialog is not shown
 (dialogs never nest) but its draft stays in the parent component.
+
+## Reports pipeline (`reports/`, `services/report_service.py`)
+
+```
+POST /api/reports/export {type, format, params}
+  ReportService.build(kind, params)    reuses EnergyService / PeakLoadService / stored optimisation and
+                                       simulation results; no figure is recalculated differently
+    -> Report (format-neutral: title, parameters, tables, assumptions, tariff description)
+  render_csv(report) | render_pdf(report)      pure functions; no database access
+    -> bytes + filename, returned as an attachment
+```
+
+Reports are a plain data structure, so the numbers are computed once and each file format is only
+a renderer. CSV uses a UTF-8 BOM (Excel) and neutralises cells starting with `= + - @`, tab or
+return (formula injection). PDF uses ReportLab, embeds Segoe UI when present (for the rupee sign)
+and degrades unsupported characters instead of failing. Every report carries the estimate label and
+its assumptions.
+
+## Data management and backup safety (`db/backup.py`, `services/data_service.py`)
+
+- **Backup** = SQLite *online backup* API into a new file with `journal_mode=DELETE`, so each backup
+  is a single self-contained file, never overwrites another (unique UTC names), and connections are
+  closed deterministically (Windows keeps files locked otherwise).
+- **Validation before trust**: size, SQLite header, `integrity_check`, required tables, one known
+  Alembic revision, `foreign_key_check`. Checking never modifies the file or the live database.
+- **Restore** = safety copy of the current data first, then the backup API copies the file into the
+  live database, the engine pool is disposed and migrations upgrade an older revision.
+- **Reset** requires the exact confirmation word, makes a safety copy, then deletes every user table
+  in one transaction (foreign-key order); backups are untouched.
+- **Names** of stored backups are matched against a strict pattern and the resolved path must be
+  inside the backups folder (no path traversal).
+- **Uploads** are raw request bodies (no multipart dependency), size-limited (500 MB, `413`), written to a
+  temporary file, validated, then deleted.
+
+Frontend: `features/reports` (catalog of the seven reports and their options) and
+`features/settings` (Backups, Data, About cards and the restore dialog). `api/client.ts` gained
+`download()` (returns the blob and the server's filename) and `upload()`; `lib/download.ts` hands the
+blob to the browser. The restore dialog calls the check endpoint first and shows the contents before
+offering the destructive button.
+
+Write ordering: the database session dependency is declared with `scope="function"` so its commit
+runs when the endpoint returns and before the response is sent.

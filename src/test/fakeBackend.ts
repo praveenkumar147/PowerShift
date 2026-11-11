@@ -10,6 +10,7 @@ import type { BillEstimate, EnergyReport, HourlyProfile, MonthlyProjection } fro
 import type { Household } from '@/features/household/api';
 import type { PeakLoadAnalysis } from '@/features/peak-load/types';
 import type { OptimizationRequest, OptimizationRun } from '@/features/scheduler/types';
+import type { About, BackupInfo, BackupSummary, ResetResult, RestoreResult } from '@/features/settings/types';
 import type { Scenario, ScenarioInput, SimulationResult } from '@/features/simulation/types';
 import type { Tariff, TariffInput } from '@/features/tariffs/types';
 
@@ -18,6 +19,32 @@ export const HEALTH: HealthResponse = {
   version: '0.1.0',
   schema_revision: '0002',
   database_path: 'C:\\data\\powershift.db',
+};
+
+export const BACKUP_SUMMARY: BackupSummary = {
+  size_bytes: 20480,
+  schema_revision: '0005',
+  needs_upgrade: false,
+  household_name: 'Sample household',
+  appliances: 9,
+  tariffs: 1,
+  scenarios: 2,
+  optimization_runs: 3,
+};
+
+export const SAFETY_BACKUP: BackupInfo = { name: 'pre-restore-20261111T100000Z.db', kind: 'pre-restore', size_bytes: 20480, created_at: '2026-11-11T10:00:00Z' };
+
+export const ABOUT: About = {
+  app_version: '0.1.0',
+  schema_revision: '0005',
+  python_version: '3.13.12',
+  solver: 'OR-Tools CP-SAT 9.15.6755',
+  data_dir: 'C:\\Users\\Me\\AppData\\PowerShift',
+  database_path: 'C:\\Users\\Me\\AppData\\PowerShift\\powershift.db',
+  database_size_bytes: 204800,
+  backups_dir: 'C:\\Users\\Me\\AppData\\PowerShift\\backups',
+  logs_dir: 'C:\\Users\\Me\\AppData\\PowerShift\\logs',
+  counts: { household: 1, appliances: 9, tariffs: 1, simulation_scenarios: 2, optimization_runs: 3 },
 };
 
 export const ZERO_ESTIMATES: Appliance['estimates'] = {
@@ -46,6 +73,8 @@ export interface EnergyFixtures {
 }
 
 export interface FakeBackend {
+  /** Backups in the backups folder, newest first. */
+  backups: BackupInfo[];
   household: Household | null;
   appliances: Appliance[];
   tariffs: Tariff[];
@@ -70,7 +99,7 @@ function json(body: unknown, status = 200): Response {
 
 const notFound = () => json({ error: { code: 'not_found', message: 'Not Found', fields: {} } }, 404);
 
-type Initial = Partial<Pick<FakeBackend, 'household' | 'appliances' | 'tariffs' | 'energy' | 'runs' | 'solve' | 'scenarios' | 'simulate'>>;
+type Initial = Partial<Pick<FakeBackend, 'household' | 'appliances' | 'tariffs' | 'energy' | 'runs' | 'solve' | 'scenarios' | 'simulate' | 'backups'>>;
 
 export function installFakeBackend(initial: Initial = {}): FakeBackend {
   const overrides: Override[] = [];
@@ -82,6 +111,7 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     energy: initial.energy ?? {},
     runs: initial.runs ?? [],
     scenarios: initial.scenarios ?? [],
+    backups: initial.backups ?? [],
     ...(initial.simulate ? { simulate: initial.simulate } : {}),
     ...(initial.solve ? { solve: initial.solve } : {}),
     requests: [],
@@ -120,6 +150,8 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     if (tariffResponse) return tariffResponse;
     const energyResponse = handleEnergy(url);
     if (energyResponse) return energyResponse;
+    const settingsResponse = handleSettings(method, path, body);
+    if (settingsResponse) return settingsResponse;
     const simulationResponse = handleSimulations(method, path, body);
     if (simulationResponse) return simulationResponse;
     const optimizationResponse = handleOptimization(method, path, body);
@@ -172,6 +204,43 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
       return json(updated);
     }
     return json(existing);
+  }
+
+  const attachment = (content: string, filename: string, type = 'text/plain') =>
+    new Response(content, { status: 200, headers: { 'Content-Type': type, 'Content-Disposition': `attachment; filename="${filename}"` } });
+
+  function handleSettings(method: string, path: string, body: unknown): Response | null {
+    if (path === '/api/reports/export' && method === 'POST') {
+      const request = body as { type: string; format: string };
+      return attachment('report-bytes', `powershift-${request.type.replaceAll('_', '-')}-20261111.${request.format}`);
+    }
+    if (path === '/api/settings/about') return json(ABOUT);
+    if (path === '/api/settings/export') return attachment('{}', 'powershift-data-export.json', 'application/json');
+    if (path === '/api/settings/backups' && method === 'GET') return json(backend.backups);
+    if (path === '/api/settings/backup' && method === 'POST') {
+      const created: BackupInfo = { name: `manual-20261111T11000${nextId++ % 10}Z.db`, kind: 'manual', size_bytes: 20480, created_at: '2026-11-11T11:00:00Z' };
+      backend.backups.unshift(created);
+      return json(created, 201);
+    }
+    if (path === '/api/settings/restore/check' && method === 'POST') return json(BACKUP_SUMMARY);
+    if (path === '/api/settings/restore' && method === 'POST') {
+      const result: RestoreResult = { restored: BACKUP_SUMMARY, safety_backup: SAFETY_BACKUP, schema_revision: '0005' };
+      return json(result);
+    }
+    if (path === '/api/settings/reset' && method === 'POST') {
+      backend.household = null;
+      backend.appliances = [];
+      const result: ResetResult = { removed: { appliances: 9, tariffs: 1, simulation_scenarios: 2, optimization_runs: 3, household: 1 }, safety_backup: { ...SAFETY_BACKUP, name: 'pre-reset-20261111T100000Z.db', kind: 'pre-reset' } };
+      return json(result);
+    }
+    const backup = /^\/api\/settings\/backups\/([^/]+)(\/check|\/restore)?$/.exec(path);
+    if (backup) {
+      const name = decodeURIComponent(backup[1] ?? '');
+      if (backup[2] === '/check') return json(BACKUP_SUMMARY);
+      if (backup[2] === '/restore' && method === 'POST') return json({ restored: BACKUP_SUMMARY, safety_backup: SAFETY_BACKUP, schema_revision: '0005' } satisfies RestoreResult);
+      return attachment('sqlite-bytes', name, 'application/octet-stream');
+    }
+    return null;
   }
 
   function handleSimulations(method: string, path: string, body: unknown): Response | null {
@@ -266,7 +335,7 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     'fetch',
     vi.fn(async (input: string, init?: RequestInit) => {
       const method = init?.method ?? 'GET';
-      const body: unknown = init?.body ? JSON.parse(init.body as string) : undefined;
+      const body: unknown = typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body;
       const url = new URL(input);
       backend.requests.push({ method, path: url.pathname + url.search, body });
       return handle(method, url, body);

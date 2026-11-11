@@ -1,6 +1,6 @@
 # Testing
 
-*Last updated: Stage 6. Totals: 282 backend, 91 frontend, 6 Rust.*
+*Last updated: Stage 7. Totals: 391 backend, 120 frontend, 6 Rust.*
 
 ## How to run
 
@@ -45,6 +45,12 @@
 | `integration/test_simulations_api.py` | **Isolation**: every real table row is identical before and after creating, running, editing and deleting a scenario that changes everything at once; scenario appliances never appear in the household. Baseline equals the normal bill, kWh and peak figures; adding an AC gives the hand-calculated +216 kWh and a higher bill; fewer washes saves energy and money; another tariff changes the bill not the energy (and scheduling saves 0 under a flat tariff); a limit too low for the scenario is INFEASIBLE with diagnostics while usual-times numbers remain; goal comparison on identical data (cost <= balanced <= peak); scheduling not attempted is explained; round trip, listing, results newest first, reproducibility; editing marks results out of date; delete cascades; 404s; 409 duplicate names; invalid changes rejected with field paths and not saved; 7 request-validation cases; a scenario that no longer fits the household is reported when run |
 | `integration/test_demo_api.py` | Sample data loads and is labelled; produces a 4-line bill; refuses (409) when any real data exists or when loaded twice |
 
+| `unit/test_report_exports.py` | CSV: UTF-8 BOM, every cell that starts with `= + - @` or a tab/return is neutralised (formula injection), tables and assumptions present, estimate label on every report; PDF: valid `%PDF` file, text extractable, long tables paginate, unsupported characters degrade instead of crashing, filenames are safe |
+| `integration/test_reports_api.py` | All seven reports in CSV and PDF; figures equal the Energy/Peak/Scheduler API figures; date and category filters; missing tariff, run or scenario → 422 on the right field; `Content-Disposition` filename; unknown fields rejected |
+| `unit/test_backup_validation.py` | Rejects: empty file, wrong header, corrupt database, missing tables, unknown or newer schema revision, broken foreign keys, oversized file; accepts a real backup and an older revision (flagged as needing upgrade); the file under test is never modified |
+| `integration/test_data_management_api.py` | Create/list/download backups (unique names, no overwrites); path-traversal names refused; check changes nothing; restore replaces data, makes a `pre-restore` copy first, upgrades older revisions, and a rejected file leaves the data untouched; raw upload check/restore and size limit (413); reset needs the exact word `RESET`, makes a `pre-reset` copy, deletes all user data and keeps backups; reset then restore round trip; JSON export; About figures |
+| `integration/test_commit_ordering.py` | A write is **committed before the response is sent** (watches the database at the moment the `201`/`204` leaves the app, which `TestClient` cannot see) |
+
 The fixtures in `tests/factories.py` are test data, not product data. Tariff rates
 in tests are invented round numbers chosen to make hand arithmetic easy.
 
@@ -70,6 +76,9 @@ in tests are invented round numbers chosen to make hand arithmetic easy.
 | `features/simulation/SimulationPage.test.tsx` | Empty state states that real data is never changed; building a scenario from simple changes; **adding an appliance to a scenario through the nested form makes no write to the household**; pre-filled change from an existing appliance; backend errors shown next to the change; duplicate-name conflict; run shows signed differences (+/-) vs the current household; savings shown with a minus sign; infeasible scenario explained while usual-times numbers remain; "edited since last run"; side-by-side comparison and the unfair-comparison warning; editing pre-fills; delete needs confirmation; run failure explained |
 | `features/energy/EnergyPage.test.tsx` | Headline tiles; data tables behind charts; itemised bill; calculation notes; filters sent to the API; "No tariff" state; range error shown on the date field |
 
+| `features/reports/ReportsPage.test.tsx` | All seven reports offered with what every report states; CSV export sends the chosen range and saves the file the server names; only the options a report uses are shown; month/year, weekday and run choices are sent; runs/scenarios missing → explanation, link and disabled export; server errors shown next to the field |
+| `features/settings/DataManagement.test.tsx` | About figures; creating, downloading and restoring stored backups; restore validates first and shows the contents before anything is replaced; rejected files explained with "your data has not been changed"; undo hint names the safety copy; export; reset needs the exact word `RESET` and shows what was removed |
+
 UI tests run against `src/test/fakeBackend.ts`, a small in-memory stand-in for the API,
 so they test the UI's behaviour without depending on the order of requests.
 
@@ -78,6 +87,11 @@ so they test the UI's behaviour without depending on the order of requests.
 READY-line parsing (valid, invalid, out-of-range ports); token length and randomness;
 READY line found after other output; process exiting before ready is reported;
 status JSON shape matches the TypeScript type.
+
+### Not covered by automated tests
+
+- Whether the packaged Tauri window (WebView2) saves downloaded files. Verified only in a browser.
+- How the PDF pages look. Tests check that the PDF is valid and its text is extractable, not the visual layout.
 
 ## Known warnings
 

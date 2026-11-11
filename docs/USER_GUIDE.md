@@ -1,6 +1,6 @@
 # User Guide
 
-*Covers features available now. Last updated: Stage 6.*
+*Covers features available now. Last updated: Stage 7.*
 
 All numbers PowerShift shows are **estimates** calculated from what you enter.
 PowerShift does not connect to a meter and does not measure anything.
@@ -216,6 +216,41 @@ profile, your household summary, and the local engine status.
 Use the switch at the bottom of the sidebar to choose **Light**, **Dark** or
 **System** (follows Windows). Your choice is remembered.
 
+## 8. Reports
+
+Open **Reports**, choose a report, choose **PDF** or **CSV**, and select **Export**.
+Your browser or the app saves the file; the page shows the file name it asked to save.
+
+| Report | Contents |
+|---|---|
+| Daily energy | Energy and cost per day for a date range (and optional category) |
+| Monthly energy | Each month of a year |
+| Appliance consumption | What every appliance uses and costs |
+| Electricity bill estimate | The itemised bill for a month |
+| Peak load | The busiest day, or the weekday you pick |
+| Optimization comparison | One Smart Scheduler run (the latest, or one you choose) |
+| Simulation comparison | Scenarios you have run, next to your current household |
+
+Every report states that its figures are **estimates**, lists the assumptions used and names the
+tariff it depends on. CSV files open in Excel with correct characters. PDF files embed the
+rupee sign when the Segoe UI font is installed. The last two reports need a run or a scenario
+that has been run; the page says so and links to the right place.
+
+## 9. Backups, restore, export and reset (Settings)
+
+- **Create backup** saves a complete copy of your data in the backups folder. Backups are
+  never deleted automatically.
+- **Download** (next to a backup) saves a copy somewhere you choose.
+- **Restore**: choose a stored backup or **Restore from a file**. PowerShift first checks the
+  file and shows what it contains (household, appliances, tariffs, scenarios, runs). Nothing is
+  replaced until you select **Replace my data**. A copy of your current data is saved first
+  (`pre-restore-...`), so you can undo a restore by restoring that copy. A file that is not a
+  valid PowerShift backup is rejected and your data is not changed.
+- **Export data** saves all your data as one JSON file (for your own records).
+- **Delete all data**: type `RESET` to confirm. A backup (`pre-reset-...`) is saved first and
+  existing backups are kept.
+- **About** shows the version, where your data lives and how much is stored.
+
 ## Not available yet
 
-Reports and backups are added in later stages. Their pages say "Not built yet".
+Dashboard integration of scheduler and simulation results, and the Windows installer, come in Stages 8 and 9.

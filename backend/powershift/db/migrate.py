@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -48,8 +49,19 @@ def backup_database(database_path: Path, backups_dir: Path, label: str) -> Path:
     backups_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     target = backups_dir / f"{label}-{stamp}.db"
-    with sqlite3.connect(database_path) as source, sqlite3.connect(target) as destination:
-        source.backup(destination)
+    duplicate = 2
+    while target.exists():  # two backups in the same second must not overwrite each other
+        target = backups_dir / f"{label}-{stamp}-{duplicate}.db"
+        duplicate += 1
+    # closing() really closes the connections; a plain `with` only commits, and an open
+    # handle keeps the file locked on Windows.
+    with (
+        closing(sqlite3.connect(database_path)) as source,
+        closing(sqlite3.connect(target)) as dest,
+    ):
+        source.backup(dest)
+        # A backup must be one self-contained file, not a database that needs -wal/-shm files.
+        dest.execute("PRAGMA journal_mode=DELETE")
     return target
 
 

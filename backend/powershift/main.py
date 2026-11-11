@@ -28,9 +28,11 @@ from powershift.api import (
     household,
     optimization,
     peak_load,
+    reports,
     simulations,
     tariffs,
 )
+from powershift.api import settings as settings_routes
 from powershift.api.security import TOKEN_HEADER, token_middleware
 from powershift.core.config import LOOPBACK_HOST, Settings, parse_settings
 from powershift.core.errors import register_error_handlers
@@ -65,6 +67,7 @@ def create_app(settings: Settings) -> FastAPI:
         allow_origins=list(settings.allowed_origins),
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["Content-Type", TOKEN_HEADER],
+        expose_headers=["Content-Disposition"],
     )
 
     register_error_handlers(app)
@@ -76,6 +79,8 @@ def create_app(settings: Settings) -> FastAPI:
     app.include_router(peak_load.router)
     app.include_router(optimization.router)
     app.include_router(simulations.router)
+    app.include_router(reports.router)
+    app.include_router(settings_routes.router)
     app.include_router(demo.router)
     return app
 
