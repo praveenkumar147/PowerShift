@@ -100,8 +100,7 @@ status JSON shape matches the TypeScript type.
 
 ### Not covered by automated tests
 
-- The packaged window. It was driven by hand through WebView2's remote-debugging port (see the Stage 9 log entry): data persisted across a restart, PDF, backup and JSON downloads reached the Downloads folder with real mouse clicks, and the backend stopped when the app closed or was killed. These checks are not automated.
-- The NSIS installer itself (it could not be built; see the README).
+- The installer and the installed app. Tested by hand (see the Stage 9 log entry): silent install, launch from the Start-menu shortcut, frozen backend, data creation and persistence across a restart, PDF/backup/JSON downloads with real mouse clicks, silent uninstall, and byte-for-byte unchanged user data afterwards. These checks are not automated.
 - Colour contrast (needs real layout): checked once per page in a real browser, light and dark, with `axe-core`.
 - Actual screen-reader output (NVDA/Narrator). The automated checks cover names, roles and labels, not what is announced.
 - Whether the packaged Tauri window (WebView2) saves downloaded files. Verified only in a browser.

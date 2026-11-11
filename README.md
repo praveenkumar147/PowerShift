@@ -4,12 +4,12 @@ An offline-first Windows desktop app for estimating household electricity use an
 cost, analysing peak demand, and generating optimized appliance schedules with
 Google OR-Tools (CP-SAT).
 
-> **Status: Stage 9 in progress: the app runs in packaged form, the installer is not built yet.** Household profile, appliance management, configurable
+> **Status: Stage 9 complete.** (All nine stages are done.) Household profile, appliance management, configurable
 > tariffs, bill estimates, energy analysis, peak load analysis, the **CP-SAT Smart
 > Scheduler**, the **Simulation Lab**, **PDF/CSV reports** and **data management**
 > (backups, validated restore, export, reset) work, and the Overview now summarises the scheduler, the
-> Simulation Lab and your backups. The frozen backend and the release app were verified end to end
-> (see [Packaging](#packaging-windows)); producing the `.exe` installer is blocked on one build tool (see Known limitations).
+> Simulation Lab and your backups. A Windows installer (`PowerShift_0.1.0_x64-setup.exe`, 58 MiB) is built, installed,
+> run, and uninstalled in testing (see [Packaging](#packaging-windows)).
 > See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 All data stays on your computer. There are no accounts, cloud services or external APIs.
@@ -116,11 +116,21 @@ Freezes the Python backend (with OR-Tools, ReportLab and the migrations) into `b
 npm run package
 ```
 
-Runs the step above, then `tauri build`, which compiles the release app and creates an NSIS installer (`src-tauri/target/release/bundle/nsis/`). Tauri downloads the NSIS tools the first time; see Known limitations if that download fails.
+Runs the step above, then `tauri build`, which compiles the release app and creates the installer at
+`src-tauri/target/release/bundle/nsis/PowerShift_0.1.0_x64-setup.exe`. It installs for the current user (no administrator
+rights) into `%LOCALAPPDATA%\PowerShift`, adds a Start-menu shortcut, and keeps your data in `%APPDATA%\com.powershift.app`.
+Uninstalling removes the program but **not** your data.
+
+**If `tauri build` stops at the NSIS step** with `timeout: global`, Tauri could not download its installer tools. Download the
+two files named in the Tauri CLI (the NSIS zip and `nsis_tauri_utils.dll`) from the official `tauri-apps` GitHub releases,
+check them against the SHA-1 values embedded in `node_modules/@tauri-apps/cli-win32-x64-msvc/*.node`, and place them under
+`%LOCALAPPDATA%\tauri\NSIS` (the DLL goes in `Plugins\x86-unicode\additional\`). The development log records the exact steps.
 
 ## Known limitations
 
-- **The installer (`.exe`) has not been produced.** `tauri build` compiles the release app and the frozen backend works, but the NSIS packaging step could not download its tools (`timeout: global`) on the machine used for development. Everything up to that step was verified (see the development log).
+- **The installer is not code-signed.** Windows SmartScreen may show "Windows protected your PC" when you first run a copy that came from the internet or another computer; choose *More info* then *Run anyway* only if you trust where it came from. (Signing needs a paid certificate.)
+- The installer was tested with its silent mode (`/S`); the graphical wizard pages were not exercised.
+- The installer, the installed app and its data were tested inside the Claude desktop app's sandbox, where Windows redirects some file locations; see the development log before relying on the exact paths.
 - Exports are saved through the WebView2 download mechanism straight to your Downloads folder (verified in the real window for PDF, backup and JSON). There is no "Save as" dialog; a repeated name gets "(1)" added.
 - PDF layout was checked by tests (text, structure, fonts), not by looking at the pages.
 - Backups are never deleted automatically; remove old ones from the backups folder yourself.

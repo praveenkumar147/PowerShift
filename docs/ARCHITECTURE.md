@@ -276,5 +276,8 @@ was only 2.8:1). `axe-core` runs in the test suite against every page and two di
 `tests/integration/test_frozen_backend.py` starts the frozen executable and checks migrations, a CP-SAT solve, a
 PDF export and a backup. It skips itself when the backend has not been built.
 
+Installed layout (verified): `%LOCALAPPDATA%\PowerShift\powershift.exe`, `uninstall.exe` and `backend\` (the frozen backend, 1,194 files in
+total, 194 MB). The installer writes a Start-menu shortcut and a per-user uninstall registry entry.
+
 Security settings are unchanged: the window's content-security policy only allows connections to `127.0.0.1`, and
 every API call needs the random token.

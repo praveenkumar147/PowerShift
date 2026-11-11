@@ -5,6 +5,13 @@
 All numbers PowerShift shows are **estimates** calculated from what you enter.
 PowerShift does not connect to a meter and does not measure anything.
 
+## Installing and removing
+
+- **Install**: run `PowerShift_0.1.0_x64-setup.exe`. It installs for your Windows account only (no administrator rights) and adds **PowerShift** to the Start menu.
+- **Unsigned installer**: Windows may warn that the publisher is unknown, because the installer is not code-signed. That is expected for this project.
+- **Your data** lives in `%APPDATA%\com.powershift.app` (database, `backups/`, `logs/`), separate from the program.
+- **Uninstall** from *Settings > Apps*, or run `uninstall.exe` in the install folder. Your data is **kept**; delete the data folder yourself if you want it gone (make a backup first).
+
 ## Starting PowerShift
 
 When you open PowerShift, a "Starting PowerShift" screen appears for a moment while
