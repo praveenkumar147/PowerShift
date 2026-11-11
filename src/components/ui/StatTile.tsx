@@ -27,7 +27,7 @@ export function StatTile({ label, value, detail, highlight = false, index = 0, f
         {value}
       </p>
       {detail && (
-        <p className="mt-2 truncate text-xs text-muted" title={detail}>
+        <p className="mt-2 line-clamp-2 text-xs leading-snug text-muted" title={detail}>
           {detail}
         </p>
       )}
