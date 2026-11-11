@@ -272,4 +272,4 @@ that has been run; the page says so and links to the right place.
 
 ## Not available yet
 
-The Windows installer is added in Stage 9.
+Nothing planned is missing from the application itself. Distribution as a Windows installer is described in the README.

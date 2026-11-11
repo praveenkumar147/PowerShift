@@ -70,7 +70,7 @@ so the UI shows each message next to the right input.
 ## Desktop shell (`src-tauri/src/backend.rs`)
 
 - **Development** (`npm run tauri dev`): runs `backend/.venv/Scripts/python.exe -m powershift`, data in `backend/.data/`.
-- **Production** (Stage 9): will run the PyInstaller-frozen `powershift-backend.exe` from the bundle's resources, data in `%APPDATA%\com.powershift.app\`. *This path is written but not yet tested.*
+- **Production**: runs the PyInstaller-frozen `powershift-backend.exe` from the bundle's `backend/` resource folder, data in `%APPDATA%\com.powershift.app\` (`powershift.db`, `backups/`, `logs/`). Tested with the release executable: the app started the frozen backend, the data folder was created, closing the window stopped both processes, and a force-kill of the app also stopped the backend (Job Object).
 - Starts the backend on a background thread so the window appears immediately.
 - Waits up to 45 s for the READY line; reports the exit code and last stderr lines on failure.
 - Assigns the process to a Windows **Job Object** with kill-on-close, so the backend can never be left running, even if the app crashes.
@@ -261,3 +261,20 @@ the page; after navigating, focus moves to the main region; a *Skip to main cont
 first tab stop (a button, not a `#link`, because the app uses hash routing); reduced-motion users get
 no animation; the danger button uses a dedicated foreground colour in dark mode (white on the dark-mode red
 was only 2.8:1). `axe-core` runs in the test suite against every page and two dialogs.
+
+## Packaging (`scripts/build-backend.ps1`, `src-tauri/tauri.conf.json`)
+
+1. **Freeze the backend.** PyInstaller (`--onedir`) bundles Python, the app, OR-Tools' native libraries
+   (`--collect-all ortools`), Uvicorn and Alembic modules, and the migration scripts as data files
+   (Alembic loads them as files, so they cannot live inside the compiled archive). The result is
+   `backend/dist/powershift-backend/` (about 190 MB, mostly OR-Tools).
+2. **Bundle it.** `tauri.conf.json` lists that folder under `bundle.resources` (target `backend/`) and builds an
+   NSIS installer for the current user (no administrator rights).
+3. **Run it.** `resolve_launch` in release builds starts `<resources>/backend/powershift-backend.exe` with the same
+   arguments as development: `--data-dir`, `--port 0`, a random per-launch token. The READY-line protocol is unchanged.
+
+`tests/integration/test_frozen_backend.py` starts the frozen executable and checks migrations, a CP-SAT solve, a
+PDF export and a backup. It skips itself when the backend has not been built.
+
+Security settings are unchanged: the window's content-security policy only allows connections to `127.0.0.1`, and
+every API call needs the random token.

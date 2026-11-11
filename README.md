@@ -4,11 +4,12 @@ An offline-first Windows desktop app for estimating household electricity use an
 cost, analysing peak demand, and generating optimized appliance schedules with
 Google OR-Tools (CP-SAT).
 
-> **Status: Stage 8 complete.** Household profile, appliance management, configurable
+> **Status: Stage 9 in progress: the app runs in packaged form, the installer is not built yet.** Household profile, appliance management, configurable
 > tariffs, bill estimates, energy analysis, peak load analysis, the **CP-SAT Smart
 > Scheduler**, the **Simulation Lab**, **PDF/CSV reports** and **data management**
 > (backups, validated restore, export, reset) work, and the Overview now summarises the scheduler, the
-> Simulation Lab and your backups. Packaging and final verification come next in Stage 9.
+> Simulation Lab and your backups. The frozen backend and the release app were verified end to end
+> (see [Packaging](#packaging-windows)); producing the `.exe` installer is blocked on one build tool (see Known limitations).
 > See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 All data stays on your computer. There are no accounts, cloud services or external APIs.
@@ -103,10 +104,24 @@ See [docs/TESTING.md](docs/TESTING.md).
 - [Development log](docs/DEVELOPMENT_LOG.md)
 - [Stage 0 plan](docs/STAGE0_PLAN.md)
 
+## Packaging (Windows)
+
+```bash
+npm run build:backend
+```
+
+Freezes the Python backend (with OR-Tools, ReportLab and the migrations) into `backend/dist/powershift-backend/` (about 190 MB) using PyInstaller.
+
+```bash
+npm run package
+```
+
+Runs the step above, then `tauri build`, which compiles the release app and creates an NSIS installer (`src-tauri/target/release/bundle/nsis/`). Tauri downloads the NSIS tools the first time; see Known limitations if that download fails.
+
 ## Known limitations
 
-- Packaging as a Windows installer is not set up yet (Stage 9).
-- Exports are saved through the browser download mechanism. This is tested in a browser and in unit tests, but not yet inside the packaged Tauri window (Stage 9).
+- **The installer (`.exe`) has not been produced.** `tauri build` compiles the release app and the frozen backend works, but the NSIS packaging step could not download its tools (`timeout: global`) on the machine used for development. Everything up to that step was verified (see the development log).
+- Exports are saved through the WebView2 download mechanism straight to your Downloads folder (verified in the real window for PDF, backup and JSON). There is no "Save as" dialog; a repeated name gets "(1)" added.
 - PDF layout was checked by tests (text, structure, fonts), not by looking at the pages.
 - Backups are never deleted automatically; remove old ones from the backups folder yourself.
 - The first screen downloads about 372 kB (117 kB gzipped). The chart library (353 kB, 103 kB gzipped) loads only with pages that draw charts, including the Overview.

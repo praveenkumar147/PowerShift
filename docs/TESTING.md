@@ -1,6 +1,6 @@
 # Testing
 
-*Last updated: Stage 8. Totals: 395 backend, 145 frontend, 6 Rust.*
+*Last updated: Stage 9. Totals: 396 backend (395 without the frozen backend built), 145 frontend, 6 Rust.*
 
 ## How to run
 
@@ -53,6 +53,8 @@
 
 | `integration/test_preferences_api.py` | Default is `system` and reading writes nothing; the choice is stored in the database in a single row; invalid themes, extra fields and an empty body are `422` and change nothing; reset returns the theme to the default |
 
+| `integration/test_frozen_backend.py` | The PyInstaller-frozen backend (skipped if `backend/dist` is absent) starts, prints the READY line, migrates a new database, solves with CP-SAT to a valid OPTIMAL schedule, writes a valid PDF and makes a backup |
+
 The fixtures in `tests/factories.py` are test data, not product data. Tariff rates
 in tests are invented round numbers chosen to make hand arithmetic easy.
 
@@ -98,6 +100,8 @@ status JSON shape matches the TypeScript type.
 
 ### Not covered by automated tests
 
+- The packaged window. It was driven by hand through WebView2's remote-debugging port (see the Stage 9 log entry): data persisted across a restart, PDF, backup and JSON downloads reached the Downloads folder with real mouse clicks, and the backend stopped when the app closed or was killed. These checks are not automated.
+- The NSIS installer itself (it could not be built; see the README).
 - Colour contrast (needs real layout): checked once per page in a real browser, light and dark, with `axe-core`.
 - Actual screen-reader output (NVDA/Narrator). The automated checks cover names, roles and labels, not what is announced.
 - Whether the packaged Tauri window (WebView2) saves downloaded files. Verified only in a browser.

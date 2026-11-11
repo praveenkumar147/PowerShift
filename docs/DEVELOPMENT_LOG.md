@@ -273,3 +273,31 @@ Substeps A-L, each tested before the next.
 - The Overview does not show report history (there is none to show: reports are generated on demand and not stored).
 - `default_optimization_priority` is stored but unused.
 - A very narrow window was not redesigned: the sidebar keeps its width and the content scrolls.
+
+## Stage 9 — Packaging and final verification (2026-11-11) ⚠ partly complete, awaiting a decision
+
+### What was done
+- **Frozen backend** (`scripts/build-backend.ps1`, `npm run build:backend`): PyInstaller one-folder build, 188 MB. Hidden imports and data files were listed deliberately (OR-Tools native libraries, Uvicorn, Alembic, migration scripts as files).
+- **Bundle configuration**: `tauri.conf.json` ships that folder as the `backend/` resource and targets an NSIS installer for the current user.
+- **Release build**: `tauri build` compiled the optimised app (`src-tauri/target/release/powershift.exe`).
+- `npm run package` runs both steps; PyInstaller was added to the dev dependencies; a test runs the frozen executable.
+
+### Verified
+- **Frozen backend on its own**: migrated a new database to `0005`; sample data loaded; the CP-SAT run returned OPTIMAL, valid, saving 400.47, exactly the same as the source backend; a PDF export and a backup were produced.
+- **Release app with the frozen backend placed beside it** (the same lookup an installed copy uses): the window opened, the backend child process started, data went to `%APPDATA%\com.powershift.app\`, the title and theme worked, sample data loaded.
+- **Data persisted** across a close and relaunch. Closing the window stopped the app and the backend; force-killing the app also stopped the backend.
+- **Downloads in the real WebView2 window** (driven over its remote-debugging port with real mouse events): PDF, backup (`.db`) and JSON export all reached the Downloads folder; several in a row worked; a repeated name became `name (1).json`.
+- **The PDF reports were looked at** for the first time: rendered through WebView2's PDF viewer and inspected as images. Layout is clean (estimate banner, aligned tables, readable fonts, headers); the bill PDF's total, 3,317.48, matches the dashboard and the itemised lines. Currency appears as the code (INR) rather than a symbol.
+- 396 backend (with the frozen backend built), 145 frontend and 6 Rust tests pass; ruff, mypy, tsc, ESLint clean.
+
+### Problems met
+- **The installer could not be built.** `tauri build` failed at the NSIS step: its downloader timed out (`timeout: global`) fetching `nsis-3.13.zip`, although `curl` reaches the same address in under a second. I unpacked the NSIS archive into Tauri's cache by hand; Tauri still reported missing files because it also needs two plugin DLLs (`nsis_tauri_utils.dll`, `ApplicationID.dll`) from GitHub releases. Downloading and installing executables into a build-tool folder was blocked by this environment's safety check, and I did not work around it.
+- **A WebView2 prompt "Download multiple files"** appeared while testing with scripted clicks. It does not appear for real mouse clicks, so it was an artifact of the test method, but it shows the browser will ask if a download ever happens without a user gesture.
+- Git Bash rewrote a `#/settings` argument into a Windows path in my test script (test harness only).
+
+### Not done / honest caveats
+- **No installer file exists**, so installing, uninstalling and the Start-menu shortcut are untested. The installed layout is assumed to match the release-exe layout that was tested (resources next to the executable).
+- No code signing, so Windows SmartScreen will warn when the installer is first run.
+- Screen readers were not run (Stage 8 caveat unchanged).
+- The 190 MB backend is mostly OR-Tools; it could be trimmed later.
+- WebView2 saves downloads silently to Downloads; there is no "Save as" dialog.

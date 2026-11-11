@@ -11,7 +11,9 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:backend": "powershell -NoProfile -File scripts/build-backend.ps1",
+    "package": "npm run build:backend && tauri build"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.107.1",
