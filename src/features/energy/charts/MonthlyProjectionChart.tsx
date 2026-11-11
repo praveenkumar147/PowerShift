@@ -1,6 +1,6 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { DataTable } from '@/components/charts/ChartCard';
-import { AxisUnit, AXIS_PROPS, BAR_RADIUS_TOP, GRID_PROPS, SERIES, TOOLTIP_CURSOR, TooltipBox } from '@/components/charts/chartTheme';
+import { AxisUnit, AXIS_PROPS, BAR_RADIUS_TOP, GRID_PROPS, SERIES, TOOLTIP_CURSOR, TooltipBox, chartMotion } from '@/components/charts/chartTheme';
 import type { MonthRow } from '@/features/energy/types';
 import { monthLong, monthShort } from '@/lib/dates';
 import { formatKwh, formatMoney } from '@/lib/format';
@@ -16,7 +16,7 @@ export function MonthlyProjectionChart({ months, currency }: { months: MonthRow[
     const row = payload?.[0]?.payload as MonthRow | undefined;
     if (!active || !row) return null;
     const rows = [
-      { label: 'Energy', value: formatKwh(row.kwh), color: SERIES.primary },
+      { label: 'Energy', value: formatKwh(row.kwh), color: SERIES.highlight },
       { label: 'Days', value: String(row.days) },
     ];
     if (row.bill_total !== null) rows.push({ label: 'Estimated bill', value: formatMoney(row.bill_total, currency) });
@@ -33,7 +33,7 @@ export function MonthlyProjectionChart({ months, currency }: { months: MonthRow[
           <XAxis dataKey="month" {...AXIS_PROPS} tickFormatter={monthShort} />
           <YAxis {...AXIS_PROPS} width={44} />
           <Tooltip cursor={TOOLTIP_CURSOR} content={renderTooltip} />
-          <Bar dataKey="kwh" fill={SERIES.primary} radius={BAR_RADIUS_TOP} maxBarSize={28} isAnimationActive={false} />
+          <Bar dataKey="kwh" fill={SERIES.highlight} radius={BAR_RADIUS_TOP} maxBarSize={28} {...chartMotion()} />
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -1,5 +1,5 @@
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AXIS_PROPS, BAR_RADIUS_END, SERIES, TOOLTIP_CURSOR, TooltipBox } from '@/components/charts/chartTheme';
+import { AXIS_PROPS, BAR_RADIUS_END, SERIES, TOOLTIP_CURSOR, TooltipBox, chartMotion } from '@/components/charts/chartTheme';
 import { formatKwh, formatMoney, formatShare } from '@/lib/format';
 
 export type BreakdownMetric = 'kwh' | 'cost';
@@ -40,7 +40,7 @@ export function BreakdownChart({ items, metric, currency, label, nameWidth = 140
     const item = payload?.[0]?.payload as BreakdownItem | undefined;
     if (!active || !item) return null;
     const rows = [
-      { label: 'Energy', value: formatKwh(item.kwh), color: SERIES.primary },
+      { label: 'Energy', value: formatKwh(item.kwh), color: SERIES.highlight },
       { label: 'Share of energy', value: formatShare(item.share) },
     ];
     if (item.energy_charge !== null) rows.push({ label: 'Energy charge', value: formatMoney(item.energy_charge, currency) });
@@ -56,10 +56,10 @@ export function BreakdownChart({ items, metric, currency, label, nameWidth = 140
           <Tooltip cursor={TOOLTIP_CURSOR} content={renderTooltip} />
           <Bar
             dataKey="value"
-            fill={SERIES.primary}
+            fill={SERIES.highlight}
             radius={BAR_RADIUS_END}
             maxBarSize={18}
-            isAnimationActive={false}
+            {...chartMotion()}
             label={{ position: 'right', fill: 'var(--ps-muted)', fontSize: 12, formatter: (v: unknown) => format(Number(v)) }}
           />
         </BarChart>

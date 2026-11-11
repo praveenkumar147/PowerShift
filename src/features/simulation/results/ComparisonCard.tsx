@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AXIS_PROPS, BAR_RADIUS_END, TOOLTIP_CURSOR, TooltipBox } from '@/components/charts/chartTheme';
+import { AXIS_PROPS, BAR_RADIUS_END, TOOLTIP_CURSOR, TooltipBox, chartMotion } from '@/components/charts/chartTheme';
 import { Card } from '@/components/ui/Card';
 import { PRIORITY_LABELS } from '@/features/scheduler/types';
 import type { Scenario, SimMetrics, SimulationResult } from '@/features/simulation/types';
@@ -18,7 +18,7 @@ interface Column {
 }
 
 const CURRENT_COLOR = 'var(--ps-muted)';
-const SCENARIO_COLOR = 'var(--ps-series-1)';
+const SCENARIO_COLOR = 'var(--ps-series-2)';
 
 interface TooltipProps {
   active?: boolean;
@@ -91,7 +91,7 @@ export function ComparisonCard({ scenarios, currency }: ComparisonCardProps) {
                   dataKey="bill"
                   radius={BAR_RADIUS_END}
                   maxBarSize={18}
-                  isAnimationActive={false}
+                  {...chartMotion()}
                   label={{ position: 'right', fill: 'var(--ps-muted)', fontSize: 12, formatter: (v: unknown) => formatMoney(Number(v), currency) }}
                 >
                   {chartData.map((d) => (

@@ -6,9 +6,22 @@
 import type { ReactNode } from 'react';
 
 export const SERIES = {
+  /** Grey: fixed load, and the "before" side of a comparison. */
   primary: 'var(--ps-series-1)',
+  /** Lime (olive in the light theme): flexible load, what the scheduler can move. */
   secondary: 'var(--ps-series-2)',
+  /** Single-series charts use the brand lime so the one thing being shown stands out. */
+  highlight: 'var(--ps-series-2)',
 } as const;
+
+/**
+ * Animation settings for every chart: draw in once (and ease between data changes), unless the person
+ * asked their system for reduced motion. Recharts does not read that setting itself.
+ */
+export function chartMotion() {
+  const reduce = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return { isAnimationActive: !reduce, animationDuration: 650, animationEasing: 'ease-out' } as const;
+}
 
 export const AXIS_PROPS = {
   stroke: 'var(--ps-muted)',
@@ -23,7 +36,7 @@ export const GRID_PROPS = { stroke: 'var(--ps-grid)', vertical: false } as const
 export const BAR_RADIUS_TOP: [number, number, number, number] = [4, 4, 0, 0];
 export const BAR_RADIUS_END: [number, number, number, number] = [0, 4, 4, 0];
 
-export const TOOLTIP_CURSOR = { fill: 'var(--ps-grid)', opacity: 0.6 };
+export const TOOLTIP_CURSOR = { fill: 'var(--ps-accent-soft)', opacity: 0.6 };
 
 /**
  * A tidy axis maximum just above `value`, so ticks land on readable numbers:
@@ -45,7 +58,7 @@ interface TooltipRow {
 /** Tooltip body in text colours; a small swatch carries the series identity. */
 export function TooltipBox({ title, rows }: { title: string; rows: TooltipRow[] }) {
   return (
-    <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-lg">
+    <div className="rounded-control border border-border bg-surface-raised px-3 py-2 text-xs shadow-float">
       <p className="mb-1 font-medium text-fg">{title}</p>
       {rows.map((row) => (
         <p key={row.label} className="flex items-center justify-between gap-4 text-muted">

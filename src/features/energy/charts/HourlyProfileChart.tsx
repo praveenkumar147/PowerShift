@@ -1,6 +1,6 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { DataTable } from '@/components/charts/ChartCard';
-import { AXIS_PROPS, BAR_RADIUS_TOP, GRID_PROPS, LegendItem, SERIES, TOOLTIP_CURSOR, TooltipBox } from '@/components/charts/chartTheme';
+import { AXIS_PROPS, BAR_RADIUS_TOP, GRID_PROPS, LegendItem, SERIES, TOOLTIP_CURSOR, TooltipBox, chartMotion } from '@/components/charts/chartTheme';
 import type { HourRow } from '@/features/energy/types';
 import { formatKwh, formatRate } from '@/lib/format';
 import { formatMinute, type TimeFormat } from '@/lib/time';
@@ -49,8 +49,8 @@ export function HourlyProfileChart({ hours, currency, timeFormat, height = 256 }
             <XAxis dataKey="hour" {...AXIS_PROPS} tickFormatter={(h: number) => formatMinute(h * 60, timeFormat)} interval={2} />
             <YAxis {...AXIS_PROPS} width={40} />
             <Tooltip cursor={TOOLTIP_CURSOR} content={renderTooltip} />
-            <Bar dataKey="fixed_kwh" stackId="load" fill={SERIES.primary} stroke="var(--ps-surface)" strokeWidth={1} maxBarSize={22} isAnimationActive={false} />
-            <Bar dataKey="flexible_kwh" stackId="load" fill={SERIES.secondary} stroke="var(--ps-surface)" strokeWidth={1} radius={BAR_RADIUS_TOP} maxBarSize={22} isAnimationActive={false} />
+            <Bar dataKey="fixed_kwh" stackId="load" fill={SERIES.primary} stroke="var(--ps-surface)" strokeWidth={1} maxBarSize={22} {...chartMotion()} />
+            <Bar dataKey="flexible_kwh" stackId="load" fill={SERIES.secondary} stroke="var(--ps-surface)" strokeWidth={1} radius={BAR_RADIUS_TOP} maxBarSize={22} {...chartMotion()} />
           </BarChart>
         </ResponsiveContainer>
       </div>

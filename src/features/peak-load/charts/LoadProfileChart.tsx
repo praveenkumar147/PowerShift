@@ -1,5 +1,5 @@
 import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AxisUnit, AXIS_PROPS, GRID_PROPS, LegendItem, niceCeiling, SERIES, TooltipBox } from '@/components/charts/chartTheme';
+import { AxisUnit, AXIS_PROPS, GRID_PROPS, LegendItem, niceCeiling, SERIES, TooltipBox, chartMotion } from '@/components/charts/chartTheme';
 import type { ApplianceInfo, DemandStep } from '@/features/peak-load/types';
 import { formatKw } from '@/lib/format';
 import { formatMinute, formatWindow, type TimeFormat } from '@/lib/time';
@@ -85,8 +85,8 @@ export function LoadProfileChart({ steps, appliances, limitKw, timeFormat, scale
             />
             <YAxis {...AXIS_PROPS} width={40} domain={[0, top]} tickCount={5} />
             <Tooltip content={renderTooltip} cursor={{ stroke: 'var(--ps-muted)', strokeDasharray: '3 3' }} />
-            <Area type="stepAfter" dataKey="fixed_kw" stackId="kw" stroke={SERIES.primary} strokeWidth={2} fill={SERIES.primary} fillOpacity={0.35} isAnimationActive={false} />
-            <Area type="stepAfter" dataKey="flexible_kw" stackId="kw" stroke={SERIES.secondary} strokeWidth={2} fill={SERIES.secondary} fillOpacity={0.35} isAnimationActive={false} />
+            <Area type="stepAfter" dataKey="fixed_kw" stackId="kw" stroke={SERIES.primary} strokeWidth={2} fill={SERIES.primary} fillOpacity={0.35} {...chartMotion()} />
+            <Area type="stepAfter" dataKey="flexible_kw" stackId="kw" stroke={SERIES.secondary} strokeWidth={2} fill={SERIES.secondary} fillOpacity={0.35} {...chartMotion()} />
             {limitKw !== null && <ReferenceLine y={limitKw} stroke={LIMIT_COLOR} strokeDasharray="6 4" strokeWidth={2} />}
           </AreaChart>
         </ResponsiveContainer>
