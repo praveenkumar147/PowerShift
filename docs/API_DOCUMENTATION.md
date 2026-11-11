@@ -1,6 +1,6 @@
 # API Documentation
 
-*Lists implemented endpoints only. Last updated: Stage 5.*
+*Lists implemented endpoints only. Last updated: Stage 6.*
 The planned API is in [STAGE0_PLAN.md §7](STAGE0_PLAN.md#7-api-design).
 
 ## Conventions
@@ -334,3 +334,67 @@ solve_time_ms, moved_count, baseline/optimized bill and peak.
 ### `GET /api/optimization/{id}`
 
 The stored run exactly as it was returned. 404 if missing.
+
+---
+
+## Simulation Lab
+
+Scenarios are what-if changes applied to **copies** of your data. No endpoint here modifies
+appliances, tariffs or the household. *(The Stage 0 plan listed `POST /api/simulations/compare`;
+the list endpoint returns every scenario with its latest result, which is all a comparison needs.)*
+
+### Scenario body (`POST` and `PUT`)
+
+```json
+{
+  "name": "Add bedroom AC",
+  "description": "A second AC",
+  "priority": "cost",
+  "balance_weight": 50,
+  "changes": [
+    { "type": "add_appliance", "appliance": { "...": "same fields as POST /api/appliances" } },
+    { "type": "replace_appliance", "appliance_id": 2, "appliance": { "...": "full appliance as it should be" } },
+    { "type": "remove_appliance", "appliance_id": 4 },
+    { "type": "change_tariff", "tariff_id": 3 },
+    { "type": "set_load_limit", "max_load_kw": 8 }
+  ]
+}
+```
+
+| Field | Rules |
+|---|---|
+| name | 1-100 characters; unique ignoring case (409) |
+| priority, balance_weight | as for the Smart Scheduler |
+| changes | 0-30 items; `type` selects the shape (unknown types are 422). An empty list compares scheduling goals on today's data |
+| `add_appliance`, `replace_appliance` | full appliance, validated like a real one; names must stay unique in the scenario |
+| `replace_appliance`, `remove_appliance` | `appliance_id` must exist and not be removed by an earlier change |
+| `change_tariff` | an existing saved tariff |
+
+A scenario that cannot be applied is rejected with field paths such as `changes.0.appliance_id`
+or `changes.1.appliance.flexible.run_duration_minutes`; nothing is saved.
+
+### Endpoints
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/simulations` | By name; each with `change_descriptions`, `latest_result` and `result_is_stale` (edited after the latest result) |
+| POST | `/api/simulations` | 201 |
+| GET / PUT / DELETE | `/api/simulations/{id}` | 404 if missing; DELETE also deletes results (204) |
+| POST | `/api/simulations/{id}/run` | 201, the stored result. 422 (with field paths) if the scenario no longer fits the current household |
+| GET | `/api/simulations/{id}/results` | Up to 20, newest first |
+
+### Result
+
+| Field | Meaning |
+|---|---|
+| `baseline` | your **actual** household today at its usual times (never modified) |
+| `scenario` | the scenario household at usual times, before scheduling |
+| `optimized` | the scenario after CP-SAT scheduling; `null` if not attempted, infeasible or failed validation |
+| `kwh_change`, `bill_change` | scenario − baseline (positive = costs more) |
+| `optimized_bill_change` | optimised scenario − baseline (negative = saves overall) |
+| `optimization_savings` | scenario bill − optimised bill: what scheduling alone recovers |
+| `peak_change_kw` | peak after scheduling when available, else at usual times, minus baseline peak |
+| `status`, `proven_optimal`, `schedule_valid`, `optimization_note` | scheduling outcome; `status` is `null` when scheduling was not attempted (no flexible appliances, or cost goal without a tariff) and the note says why |
+| `items`, `validation`, `diagnostics`, `change_descriptions`, `notes` | as for the Smart Scheduler, plus generated descriptions of each change |
+
+Money is for the current calendar month. All figures are estimates.

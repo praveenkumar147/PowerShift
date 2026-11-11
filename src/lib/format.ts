@@ -47,3 +47,22 @@ export function formatRate(rate: number, currency: string | null | undefined): s
   const decimals = (String(rate).split('.')[1] ?? '').length;
   return `${currencyAmount(rate, currency, Math.min(4, Math.max(2, decimals)))}/kWh`;
 }
+
+function signed(value: number, text: string): string {
+  if (value > 0) return `+${text}`;
+  if (value < 0) return `−${text}`;
+  return text;
+}
+
+/** "+₹284.62", "−₹41.20" or "₹0.00": the sign is part of the text, never conveyed by colour alone. */
+export function formatSignedMoney(amount: number, currency: string | null | undefined): string {
+  return signed(amount, formatMoney(Math.abs(amount), currency));
+}
+
+export function formatSignedKwh(kwh: number): string {
+  return signed(kwh, formatKwh(Math.abs(kwh)));
+}
+
+export function formatSignedKw(kw: number): string {
+  return signed(kw, formatKw(Math.abs(kw)));
+}

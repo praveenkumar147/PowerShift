@@ -171,3 +171,9 @@ goal and several balance weights.
 - The scheduler recommends; it does **not** change your appliance settings. Applying a
   schedule is not part of the agreed scope.
 - All figures are estimates from user-entered settings, not measurements.
+
+## Shared pipeline
+
+Steps 1-9 live in `optimization/pipeline.py` (`run_pipeline`), which takes plain objects and touches no
+database. The Smart Scheduler uses it on the real household; the Simulation Lab uses it on modified
+copies. Both therefore get the same solver, the same independent validation and the same explanations.

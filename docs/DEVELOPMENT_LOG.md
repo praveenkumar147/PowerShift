@@ -131,7 +131,7 @@
 ### Not done / deferred
 - The Overview does not yet surface peak warnings; dashboard integration is Stage 8.
 
-## Stage 5 — Optimization engine (2026-11-10 to 2026-11-11) ✅ complete, awaiting approval
+## Stage 5 — Optimization engine (2026-11-10 to 2026-11-11) ✅ approved
 
 Substeps A-L, each tested before the next.
 
@@ -165,3 +165,36 @@ Substeps A-L, each tested before the next.
 - No button to apply a schedule to the appliances (outside agreed scope; the app recommends only).
 - Overview does not yet show scheduler results (Stage 8 dashboard integration).
 - Per-day start times and per-appliance weights are possible extensions.
+
+## Stage 6 — Simulation Lab (2026-11-11) ✅ complete, awaiting approval
+
+### Design decisions
+- **Scenarios store changes, not copies.** A scenario is a list of what-if edits applied to in-memory copies at run time. Isolation is structural: the scenario and pipeline modules import nothing from `db/`, domain specs are immutable, new appliances get negative ids, and only the two simulation tables are written.
+- **Five change types**: add, replace (a full replacement, so hours, days, windows, power and quantity are all covered), remove, use another saved tariff, set the load limit. A scenario with no changes compares scheduling goals.
+- **Three numbers side by side**: the actual household (baseline), the scenario at usual times, and the scenario after CP-SAT scheduling, so "the change costs X" and "scheduling recovers Y" are never confused.
+- **Honest degraded results**: when scheduling cannot run (no flexible appliances, cost goal without a tariff) or has no valid schedule, the usual-times comparison is still returned, with the reason.
+- **Results can go stale**: scenarios follow the real household. Results store the baseline used, and the UI warns when a comparison mixes baselines or when a scenario was edited after its last run.
+- **Pipeline extracted from the Stage 5 service** (no behaviour change; all Stage 5 tests passed unchanged) so both features share the solver, validation and explanations.
+
+### Deviations from the Stage 0 plan
+- No separate `POST /api/simulations/compare`: the list endpoint returns each scenario with its latest result.
+- No snapshot of the base household inside the scenario (the plan's `base_snapshot_json`); see above. Results record their baseline instead.
+
+### Built
+- Backend: `simulation/scenario.py`, `simulation/describe.py`, `optimization/pipeline.py`, migration `0005`, scenario CRUD, run and results endpoints.
+- Frontend: Simulation Lab page (scenario cards, run, details, comparison chart and table), scenario editor with a change builder; the appliance form can return values instead of saving; shared schedule table and validation card.
+
+### Verified
+- 282 backend, 91 frontend and 6 Rust tests pass; ruff, mypy (strict), tsc (strict), ESLint clean; build succeeds.
+- Live on sample data: three scenarios run through the real solver. Bedroom AC: +216 kWh (1.5 kW x 0.6 x 8 h x 30 days) and +1,088.64 bill (216 x 4.50 + 0.30 per kWh, then 5% duty), with the dishwasher moved to 05:00-07:00 because the AC would otherwise push the household to 5.26 kW over the 5 kW limit. Wash less: -12 kWh and -110.88 (12 kWh at the 8.50 peak rate with surcharge and duty). The real appliance and tariff lists were unchanged.
+
+### Problems met and fixed
+- A name-uniqueness check based on object identity missed duplicates when the same object was added twice; replaced with "count the names in the final scenario household".
+- `POST` returned timestamps with a `Z` while `GET` returned them without (SQLite drops time zones); the read models now always emit UTC. The stale-result comparison hit the same naive/aware mix and now normalises both.
+- A method named `list` shadowed the built-in inside its class for type annotations; renamed.
+- An unused import of a module that did not exist slipped into a first draft of `pipeline.py`; caught by the first import and rewritten.
+
+### Not done / deferred
+- The Overview does not show scenario results (Stage 8).
+- Scenario results are for the current calendar month only.
+- Scenarios cannot yet be duplicated with one click.

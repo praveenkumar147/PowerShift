@@ -1,6 +1,6 @@
 # User Guide
 
-*Covers features available now. Last updated: Stage 5.*
+*Covers features available now. Last updated: Stage 6.*
 
 All numbers PowerShift shows are **estimates** calculated from what you enter.
 PowerShift does not connect to a meter and does not measure anything.
@@ -173,6 +173,38 @@ checklist. A schedule is only shown as a recommendation if every check passes.
 Every run is saved in **History** with its settings, so you can compare goals later.
 Results are estimates from your settings, not measurements or guarantees.
 
+## 7. Simulation Lab
+
+Ask "what if?" without touching your real data. A **scenario** is a set of changes applied to a
+**copy** of your household; your real appliances, tariffs and settings are never changed.
+
+Select **New scenario**, name it, and add changes:
+
+| Change | Example |
+|---|---|
+| Add a new appliance | A bedroom air conditioner |
+| Add another copy of an appliance | A second refrigerator |
+| Change an appliance | More AC hours, fewer washing days, a different window |
+| Remove an appliance | What if I got rid of the old heater? |
+| Use a different tariff | Compare your saved tariffs |
+| Change the household load limit | A bigger connection |
+
+A scenario also has a **scheduling goal**. A scenario with no changes compares goals on today's data:
+make one scenario per goal and compare them.
+
+Select **Run scenario**. For each scenario you see, **against your current household**:
+
+- Energy per month, and the bill before and after the smart scheduler (a `+` costs more, a `−` saves).
+- Peak demand, and the recommended schedule with reasons if one exists.
+- If the scenario has no valid schedule (for example its load limit is too low), the reasons, while the numbers at usual times are still shown.
+
+The **Comparison** at the top puts every scenario that has been run next to your current household.
+If you change your real appliances after running a scenario, results go out of date: run them
+again. The page warns when a comparison mixes results from different households. Edited
+scenarios show "Edited since last run".
+
+> Every figure is an estimate from your settings, not a measurement or a guarantee.
+
 ## Overview
 
 Shows this month's estimated energy, bill, average per day and the share of energy
@@ -186,4 +218,4 @@ Use the switch at the bottom of the sidebar to choose **Light**, **Dark** or
 
 ## Not available yet
 
-Simulations, reports and backups are added in later stages. Their pages say "Not built yet".
+Reports and backups are added in later stages. Their pages say "Not built yet".

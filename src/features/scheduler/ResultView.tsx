@@ -6,7 +6,7 @@ import { NotesBox } from '@/components/ui/NotesBox';
 import { StatTile } from '@/components/ui/StatTile';
 import { WEEKDAY_SHORT } from '@/features/appliances/types';
 import { LoadProfileChart } from '@/features/peak-load/charts/LoadProfileChart';
-import { PRIORITY_LABELS, STAGE_LABELS, type OptimizationRun } from '@/features/scheduler/types';
+import { PRIORITY_LABELS, STAGE_LABELS, type OptimizationRun, type ScheduleItem, type ValidationCheck } from '@/features/scheduler/types';
 import { cn } from '@/lib/cn';
 import { formatDateTime, monthLong } from '@/lib/dates';
 import { formatKw, formatMoney } from '@/lib/format';
@@ -92,7 +92,7 @@ export function ResultView({ run, currency, timeFormat }: ResultViewProps) {
       {run.schedule_valid && run.optimized && (
         <>
           <Tiles run={run} currency={currency} month={month} />
-          <ScheduleTable run={run} timeFormat={timeFormat} />
+          <ScheduleTable items={run.items} timeFormat={timeFormat} />
           {run.profile && (
             <ChartCard
               title={`Load profile on ${WEEKDAY_SHORT[run.profile.weekday]}, before and after`}
@@ -118,7 +118,7 @@ export function ResultView({ run, currency, timeFormat }: ResultViewProps) {
         </>
       )}
 
-      {run.validation.length > 0 && <ValidationCard run={run} />}
+      {run.validation.length > 0 && <ValidationCard checks={run.validation} />}
       <SolverDetails run={run} />
       <NotesBox notes={run.notes} title="About these results" />
     </div>
@@ -152,7 +152,8 @@ function Tiles({ run, currency, month }: { run: OptimizationRun; currency: strin
   );
 }
 
-function ScheduleTable({ run, timeFormat }: { run: OptimizationRun; timeFormat: TimeFormat }) {
+/** Recommended start/end times with reasons. Shared with the Simulation Lab. */
+export function ScheduleTable({ items, timeFormat }: { items: ScheduleItem[]; timeFormat: TimeFormat }) {
   return (
     <Card title="Recommended schedule" description="One start time per flexible appliance, used on every day it runs.">
       <div className="overflow-x-auto">
@@ -167,7 +168,7 @@ function ScheduleTable({ run, timeFormat }: { run: OptimizationRun; timeFormat: 
             </tr>
           </thead>
           <tbody className="divide-y divide-border align-top">
-            {run.items.map((item) => (
+            {items.map((item) => (
               <tr key={item.appliance_id}>
                 <th scope="row" className="py-3 pr-4 font-medium">
                   {item.name}
@@ -202,15 +203,16 @@ function ScheduleTable({ run, timeFormat }: { run: OptimizationRun; timeFormat: 
   );
 }
 
-function ValidationCard({ run }: { run: OptimizationRun }) {
-  const passed = run.validation.filter((c) => c.passed).length;
+/** The independent checks of a schedule. Shared with the Simulation Lab. */
+export function ValidationCard({ checks }: { checks: ValidationCheck[] }) {
+  const passed = checks.filter((c) => c.passed).length;
   return (
     <Card
       title="Independent validation"
-      description={`${passed} of ${run.validation.length} checks passed. Re-checked from your appliance settings, without using the solver.`}
+      description={`${passed} of ${checks.length} checks passed. Re-checked from your appliance settings, without using the solver.`}
     >
       <ul className="space-y-2 text-sm">
-        {run.validation.map((check) => (
+        {checks.map((check) => (
           <li key={check.code} className="flex items-start gap-2">
             {check.passed ? (
               <CheckCircle2 aria-label="Passed" className="mt-0.5 size-4 shrink-0 text-success" />

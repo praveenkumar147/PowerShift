@@ -39,6 +39,8 @@ def apply_schedule(
 
 @dataclass(frozen=True, slots=True)
 class ScheduleMetrics:
+    monthly_kwh: float
+    """Estimated energy for the reference month."""
     weekly_energy_charge: Decimal | None
     """Energy charge for one typical week; None unless the tariff is flat or time-of-use."""
     monthly_bill: Decimal | None
@@ -69,6 +71,7 @@ def measure(
     days = tuple(analyse_day(demands, weekday, limit_kw) for weekday in WEEKDAYS)
     worst = max(days, key=lambda d: (d.peak_kw, -d.weekday))
     return ScheduleMetrics(
+        monthly_kwh=model.month_kwh(year, month),
         weekly_energy_charge=weekly,
         monthly_bill=bill.total if bill else None,
         peak_kw=worst.peak_kw,

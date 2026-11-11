@@ -1,6 +1,6 @@
 # Architecture
 
-*Describes what is implemented. Last updated: Stage 5.*
+*Describes what is implemented. Last updated: Stage 6.*
 
 ## Overview
 
@@ -160,3 +160,35 @@ OptimizationService.run
 
 `validation.py` deliberately imports nothing from OR-Tools, the builder, the runner or the
 problem module (enforced by a test), so a bug in the model cannot hide itself.
+
+## Simulation Lab and isolation
+
+A scenario is stored as a **list of changes** (add / replace / remove an appliance, use another
+saved tariff, set the load limit), never as copies of data. Running one:
+
+```
+SimulationService.run(scenario)
+  read real appliances, household, active tariff        (read-only)
+  simulation.scenario.apply_changes(...)                builds NEW in-memory lists; specs are immutable
+  optimization.pipeline.run_pipeline(real household)    -> baseline ("current household")
+  optimization.pipeline.run_pipeline(scenario household)-> usual-times metrics + CP-SAT result + validation
+  write ONE row to simulation_results                   (the only write)
+```
+
+Isolation is structural, not just a promise:
+
+- `simulation/scenario.py` and `optimization/pipeline.py` import nothing from `db/`; they cannot write.
+- Domain specs are frozen dataclasses; a change builds a new object, it cannot edit the original.
+- New appliances in a scenario get **negative ids**, so they can never match a real row.
+- The only tables written are `simulation_scenarios` and `simulation_results`.
+- A test snapshots every real table (household, appliances and children, tariffs and children)
+  and the optimization history before and after creating, running, editing and deleting a
+  scenario that changes everything at once, and requires identical rows.
+
+`optimization/pipeline.py` is shared by the Smart Scheduler and the Simulation Lab (extracted in
+Stage 6 with no behaviour change), so a scenario is optimised by exactly the same code as the
+real household, including independent validation.
+
+On the frontend, the appliance form accepts `onSubmitInput` so the Simulation Lab reuses it to
+edit scenario appliances without saving them. While it is open the scenario dialog is not shown
+(dialogs never nest) but its draft stays in the parent component.

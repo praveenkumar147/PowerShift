@@ -28,6 +28,7 @@ from powershift.api import (
     household,
     optimization,
     peak_load,
+    simulations,
     tariffs,
 )
 from powershift.api.security import TOKEN_HEADER, token_middleware
@@ -74,6 +75,7 @@ def create_app(settings: Settings) -> FastAPI:
     app.include_router(energy.router)
     app.include_router(peak_load.router)
     app.include_router(optimization.router)
+    app.include_router(simulations.router)
     app.include_router(demo.router)
     return app
 

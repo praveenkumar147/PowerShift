@@ -27,19 +27,14 @@ from powershift.db.repositories.appliances import ApplianceRepository, to_spec
 from powershift.db.repositories.household import HouseholdRepository
 from powershift.domain.household import TimeFormat
 from powershift.domain.tariff import TariffType
-from powershift.domain.time_window import format_minute, run_window
-from powershift.optimization.diagnose import diagnose
-from powershift.optimization.explain import explain
-from powershift.optimization.metrics import ScheduleMetrics, apply_schedule, measure
+from powershift.domain.time_window import format_minute
+from powershift.optimization.metrics import ScheduleMetrics
+from powershift.optimization.pipeline import run_pipeline
 from powershift.optimization.problem import (
-    COST_SCALE,
     WATTS_PER_KW,
     Priority,
-    build_problem,
-    validate_problem,
 )
-from powershift.optimization.runner import SolverSettings, SolveStatus, solve
-from powershift.optimization.validation import ScheduledRun, validate_schedule
+from powershift.optimization.runner import SolverSettings, SolveStatus
 from powershift.schemas.energy import TariffSummary
 from powershift.schemas.optimization import (
     CheckRead,
@@ -123,59 +118,42 @@ class OptimizationService:
             format_minute, twelve_hour=bool(household and household.time_format is TimeFormat.H12)
         )
 
-        # 1. Validate the input model.
-        problem = build_problem(appliances, tariff, limit_kw, request.start_step_minutes)
-        issues = validate_problem(problem, request.priority)
-        if issues:
-            raise ValidationFailedError(
-                " ".join(issue.message for issue in issues),
-                {
-                    ("priority" if i.code == "no_tariff" else "appliances"): i.message
-                    for i in issues
-                },
-            )
-
+        # 1-9. Validate inputs, build and solve the CP-SAT model, interpret the status,
+        # validate the schedule independently, explain or diagnose (shared pipeline).
         year, month = today.year, today.month
-        baseline = measure(appliances, tariff, limit_kw, year, month)
-
-        # 2-8. Build, solve, interpret.
         settings = SolverSettings(
             time_limit_seconds=request.time_limit_seconds, balance_weight=request.balance_weight
         )
-        result = solve(problem, request.priority, settings)
-        found = result.status in (SolveStatus.OPTIMAL, SolveStatus.FEASIBLE)
-        proven = result.status is SolveStatus.OPTIMAL
-
-        optimized: ScheduleMetrics | None = None
-        items: list[ScheduleItem] = []
-        checks: list[CheckRead] = []
-        diagnostics: list[DiagnosticRead] = []
-        profile: ProfileComparison | None = None
-
-        if found:
-            moved = apply_schedule(appliances, result.starts)
-            optimized = measure(moved, tariff, limit_kw, year, month)
-            schedule = {
-                task.appliance_id: ScheduledRun(
-                    result.starts[task.appliance_id],
-                    run_window(result.starts[task.appliance_id], task.duration_minutes).end_minute,
-                )
-                for task in problem.tasks
-            }
-            # 9. Independent validation.
-            priced = tariff is not None and tariff.tariff_type is not TariffType.SLAB
-            report = validate_schedule(
-                appliances,
-                schedule,
-                tariff,
-                limit_kw,
-                Decimal(result.cost) / COST_SCALE if priced and result.cost is not None else None,
-                result.peak_w / WATTS_PER_KW if result.peak_w is not None else None,
-                year,
-                month,
+        outcome = run_pipeline(
+            appliances,
+            tariff,
+            limit_kw,
+            request.priority,
+            settings,
+            request.start_step_minutes,
+            year,
+            month,
+            fmt,
+        )
+        if outcome.issues:
+            raise ValidationFailedError(
+                " ".join(issue.message for issue in outcome.issues),
+                {
+                    ("priority" if i.code == "no_tariff" else "appliances"): i.message
+                    for i in outcome.issues
+                },
             )
-            checks = [CheckRead(**dataclasses.asdict(check)) for check in report.checks]
-            reasons = explain(appliances, result.starts, tariff, limit_kw, proven, fmt)
+        assert outcome.result is not None  # set whenever there are no input issues
+        result = outcome.result
+        baseline = outcome.before
+        optimized = outcome.optimized
+        found = outcome.found
+        proven = outcome.proven_optimal
+        checks = [CheckRead(**dataclasses.asdict(check)) for check in outcome.checks]
+        diagnostics = [DiagnosticRead(code=d.code, message=d.message) for d in outcome.diagnostics]
+        items: list[ScheduleItem] = []
+        profile: ProfileComparison | None = None
+        if found and optimized is not None:
             items = [
                 ScheduleItem(
                     appliance_id=task.appliance_id,
@@ -183,14 +161,16 @@ class OptimizationService:
                     power_kw=kw_out(task.power_w / WATTS_PER_KW),
                     duration_minutes=task.duration_minutes,
                     baseline_start_minute=task.current_start_minute,
-                    start_minute=schedule[task.appliance_id].start_minute,
-                    end_minute=schedule[task.appliance_id].end_minute,
-                    moved=schedule[task.appliance_id].start_minute != task.current_start_minute,
+                    start_minute=outcome.schedule[task.appliance_id].start_minute,
+                    end_minute=outcome.schedule[task.appliance_id].end_minute,
+                    moved=outcome.schedule[task.appliance_id].start_minute
+                    != task.current_start_minute,
                     reasons=[
-                        ReasonRead(code=r.code, text=r.text) for r in reasons[task.appliance_id]
+                        ReasonRead(code=r.code, text=r.text)
+                        for r in outcome.reasons[task.appliance_id]
                     ],
                 )
-                for task in problem.tasks
+                for task in outcome.problem.tasks
             ]
             weekday = baseline.peak_weekday
             profile = ProfileComparison(
@@ -198,10 +178,6 @@ class OptimizationService:
                 before=_steps(baseline.days[weekday]),
                 after=_steps(optimized.days[weekday]),
             )
-        elif result.status is SolveStatus.INFEASIBLE:
-            diagnostics = [
-                DiagnosticRead(code=d.code, message=d.message) for d in diagnose(problem, fmt)
-            ]
 
         schedule_valid = found and all(check.passed for check in checks)
         notes = [NOTE_ESTIMATE, NOTE_ONE_START]

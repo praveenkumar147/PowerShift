@@ -10,6 +10,7 @@ import type { BillEstimate, EnergyReport, HourlyProfile, MonthlyProjection } fro
 import type { Household } from '@/features/household/api';
 import type { PeakLoadAnalysis } from '@/features/peak-load/types';
 import type { OptimizationRequest, OptimizationRun } from '@/features/scheduler/types';
+import type { Scenario, ScenarioInput, SimulationResult } from '@/features/simulation/types';
 import type { Tariff, TariffInput } from '@/features/tariffs/types';
 
 export const HEALTH: HealthResponse = {
@@ -53,6 +54,10 @@ export interface FakeBackend {
   runs: OptimizationRun[];
   /** Builds the result of the next POST /api/optimization/run (id is assigned by the fake). */
   solve?: (request: OptimizationRequest) => OptimizationRun;
+  /** Simulation Lab scenarios. */
+  scenarios: Scenario[];
+  /** Builds the result of running a scenario (the id is assigned by the fake). */
+  simulate?: (scenario: Scenario) => SimulationResult;
   requests: Array<{ method: string; path: string; body: unknown }>;
   /** Make the next matching request fail (or return a custom body). */
   respondOnce: (method: string, path: string, status: number, body: unknown) => void;
@@ -65,7 +70,7 @@ function json(body: unknown, status = 200): Response {
 
 const notFound = () => json({ error: { code: 'not_found', message: 'Not Found', fields: {} } }, 404);
 
-type Initial = Partial<Pick<FakeBackend, 'household' | 'appliances' | 'tariffs' | 'energy' | 'runs' | 'solve'>>;
+type Initial = Partial<Pick<FakeBackend, 'household' | 'appliances' | 'tariffs' | 'energy' | 'runs' | 'solve' | 'scenarios' | 'simulate'>>;
 
 export function installFakeBackend(initial: Initial = {}): FakeBackend {
   const overrides: Override[] = [];
@@ -76,6 +81,8 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     tariffs: initial.tariffs ?? [],
     energy: initial.energy ?? {},
     runs: initial.runs ?? [],
+    scenarios: initial.scenarios ?? [],
+    ...(initial.simulate ? { simulate: initial.simulate } : {}),
     ...(initial.solve ? { solve: initial.solve } : {}),
     requests: [],
     respondOnce: (method, path, status, body) => overrides.push({ method, path, status, body }),
@@ -113,6 +120,8 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     if (tariffResponse) return tariffResponse;
     const energyResponse = handleEnergy(url);
     if (energyResponse) return energyResponse;
+    const simulationResponse = handleSimulations(method, path, body);
+    if (simulationResponse) return simulationResponse;
     const optimizationResponse = handleOptimization(method, path, body);
     if (optimizationResponse) return optimizationResponse;
     if (path === '/api/demo' && method === 'POST') return json({ appliances: 9, tariffs: 1 }, 201);
@@ -160,6 +169,46 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     if (method === 'PUT') {
       const updated = { ...existing, ...(body as TariffInput) };
       backend.tariffs = backend.tariffs.map((t) => (t.id === id ? updated : t));
+      return json(updated);
+    }
+    return json(existing);
+  }
+
+  function handleSimulations(method: string, path: string, body: unknown): Response | null {
+    if (path === '/api/simulations' && method === 'GET') return json(backend.scenarios);
+    if (path === '/api/simulations' && method === 'POST') {
+      const input = body as ScenarioInput;
+      const now = new Date().toISOString();
+      const created: Scenario = {
+        ...input,
+        id: nextId++,
+        change_descriptions: input.changes.map((c) => c.type),
+        created_at: now,
+        updated_at: now,
+        latest_result: null,
+        result_is_stale: false,
+      };
+      backend.scenarios.push(created);
+      return json(created, 201);
+    }
+    const match = /^\/api\/simulations\/(\d+)(\/run)?$/.exec(path);
+    if (!match) return null;
+    const index = backend.scenarios.findIndex((s) => s.id === Number(match[1]));
+    const existing = backend.scenarios[index];
+    if (!existing) return notFound();
+    if (match[2] && method === 'POST') {
+      if (!backend.simulate) return notFound();
+      const result = { ...backend.simulate(existing), id: nextId++, scenario_id: existing.id };
+      backend.scenarios[index] = { ...existing, latest_result: result, result_is_stale: false };
+      return json(result, 201);
+    }
+    if (method === 'DELETE') {
+      backend.scenarios.splice(index, 1);
+      return json(null, 204);
+    }
+    if (method === 'PUT') {
+      const updated: Scenario = { ...existing, ...(body as ScenarioInput), result_is_stale: existing.latest_result !== null };
+      backend.scenarios[index] = updated;
       return json(updated);
     }
     return json(existing);

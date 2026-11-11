@@ -1,6 +1,6 @@
 # Database Design
 
-*Describes the schema that exists now. Last updated: Stage 5 (revision `0004`).*
+*Describes the schema that exists now. Last updated: Stage 6 (revision `0005`).*
 The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-database-design).
 
 ## Engine
@@ -19,6 +19,7 @@ The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-data
 | `0002` | `appliances`, `appliance_operating_days`, `appliance_usage_blocks`, `appliance_flex_constraints` |
 | `0003` | `tariffs`, `tariff_periods`, `tariff_slabs`, `tariff_charges` |
 | `0004` | `optimization_runs`, `optimization_run_items` |
+| `0005` | `simulation_scenarios`, `simulation_results` |
 
 - Alembic scripts live in `backend/powershift/db/migrations/versions/`.
 - The backend upgrades the database to the latest revision automatically at startup.
@@ -205,3 +206,33 @@ One row per solver run, with everything needed to reproduce or investigate it.
 
 JSON snapshots are used for inputs and results because a run must stay reproducible and
 displayable after the user edits or deletes appliances.
+
+### `simulation_scenarios`
+
+| Column | Type | Notes |
+|---|---|---|
+| id, created_at, updated_at | | |
+| name | VARCHAR(100) | unique ignoring case (index `uq_simulation_scenarios_name_lower`, added by hand in the migration like `uq_appliances_name_lower`) |
+| description | VARCHAR(500) NULL | |
+| priority | VARCHAR(10) | `cost`, `peak`, `balanced` (CHECK) |
+| balance_weight | INTEGER | 0-100 (CHECK) |
+| changes_json | TEXT | the list of what-if changes; **no copies of appliances or tariffs of the real household** |
+
+### `simulation_results`
+
+One row per run. Key numbers are columns (for queries); `result_json` is the full result, shown exactly as it was when run.
+
+| Column | Type | Notes |
+|---|---|---|
+| id, created_at | | |
+| scenario_id | FK → simulation_scenarios.id, ON DELETE CASCADE | indexed |
+| status | VARCHAR(15) NULL | solver status; NULL if scheduling was not attempted |
+| schedule_valid | BOOLEAN | schedule found AND independently validated |
+| baseline_kwh, scenario_kwh | FLOAT | estimated monthly energy |
+| baseline_bill, scenario_bill, optimized_bill | NUMERIC(14,2) NULL | estimated monthly bill |
+| baseline_peak_kw, scenario_peak_kw, optimized_peak_kw | FLOAT | worst-case peak |
+| result_json | TEXT | |
+
+Scenarios are stored as changes (not snapshots), so they follow your real household. Each
+result records the baseline it was compared with; the Simulation Lab warns when results in a
+comparison were calculated on different households.

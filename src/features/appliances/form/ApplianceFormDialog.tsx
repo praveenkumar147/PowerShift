@@ -15,7 +15,7 @@ import {
   type ApplianceFormValues,
   type FieldErrors,
 } from '@/features/appliances/formModel';
-import { CATEGORIES, CATEGORY_LABELS, PRIORITY_LABELS, type Appliance, type ApplianceMode, type Priority } from '@/features/appliances/types';
+import { CATEGORIES, CATEGORY_LABELS, PRIORITY_LABELS, type Appliance, type ApplianceInput, type ApplianceMode, type Priority } from '@/features/appliances/types';
 
 const FORM_ID = 'appliance-form';
 
@@ -41,9 +41,17 @@ function isPlacedField(key: string): boolean {
 interface ApplianceFormDialogProps {
   appliance: Appliance | null;
   onClose: () => void;
+  /**
+   * When given, the form hands the validated values to the caller instead of saving
+   * the appliance (the Simulation Lab uses this: nothing is written to the household).
+   */
+  onSubmitInput?: (input: ApplianceInput) => void;
+  title?: string;
+  description?: string;
+  submitLabel?: string;
 }
 
-export function ApplianceFormDialog({ appliance, onClose }: ApplianceFormDialogProps) {
+export function ApplianceFormDialog({ appliance, onClose, onSubmitInput, title, description, submitLabel }: ApplianceFormDialogProps) {
   const [values, setValues] = useState<ApplianceFormValues>(() => (appliance ? fromAppliance(appliance) : emptyFormValues()));
   const [clientErrors, setClientErrors] = useState<FieldErrors>({});
   const save = useSaveAppliance(appliance?.id ?? null);
@@ -71,14 +79,18 @@ export function ApplianceFormDialog({ appliance, onClose }: ApplianceFormDialogP
       return;
     }
     setClientErrors({});
+    if (onSubmitInput) {
+      onSubmitInput(result.input);
+      return;
+    }
     save.mutate(result.input, { onSuccess: onClose });
   }
 
   return (
     <Modal
       size="lg"
-      title={appliance ? `Edit ${appliance.name}` : 'Add appliance'}
-      description="Values are your estimates; PowerShift does not measure consumption."
+      title={title ?? (appliance ? `Edit ${appliance.name}` : 'Add appliance')}
+      description={description ?? 'Values are your estimates; PowerShift does not measure consumption.'}
       onClose={onClose}
       footer={
         <>
@@ -86,7 +98,7 @@ export function ApplianceFormDialog({ appliance, onClose }: ApplianceFormDialogP
             Cancel
           </Button>
           <Button type="submit" form={FORM_ID} disabled={save.isPending}>
-            {save.isPending ? 'Saving…' : appliance ? 'Save changes' : 'Add appliance'}
+            {save.isPending ? 'Saving…' : (submitLabel ?? (appliance ? 'Save changes' : 'Add appliance'))}
           </Button>
         </>
       }
