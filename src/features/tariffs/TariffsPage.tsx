@@ -65,7 +65,7 @@ export function TariffsPage() {
       )}
 
       {tariffs.isSuccess && tariffs.data.length > 0 && !tariffs.data.some((t) => t.is_active) && (
-        <p role="status" className="mb-4 rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+        <p role="status" className="mb-4 rounded-control border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
           No tariff is active, so costs are not calculated. Choose "Use this tariff" on one below.
         </p>
       )}

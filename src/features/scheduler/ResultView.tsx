@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { ChartCard } from '@/components/charts/ChartCard';
 import { Card } from '@/components/ui/Card';
 import { NotesBox } from '@/components/ui/NotesBox';
+import { BeforeAfterBars } from '@/components/ui/BeforeAfterBars';
+import { revealDelay } from '@/components/ui/Card';
 import { StatTile } from '@/components/ui/StatTile';
 import { WEEKDAY_SHORT } from '@/features/appliances/types';
 import { LoadProfileChart } from '@/features/peak-load/charts/LoadProfileChart';
@@ -57,7 +59,7 @@ function verdict(run: OptimizationRun): { tone: Tone; title: string; detail: str
 function Banner({ tone, title, children }: { tone: Tone; title: string; children: ReactNode }) {
   const Icon = tone === 'success' ? CheckCircle2 : tone === 'warning' ? AlertTriangle : XCircle;
   return (
-    <div role="status" className={cn('rounded-xl border px-4 py-3 text-sm', TONE_CLASSES[tone])}>
+    <div role="status" className={cn('animate-rise rounded-card border px-5 py-4 text-sm', TONE_CLASSES[tone])}>
       <p className="flex items-center gap-2 font-medium">
         <Icon aria-hidden className="size-4" /> {title}
       </p>
@@ -92,6 +94,7 @@ export function ResultView({ run, currency, timeFormat }: ResultViewProps) {
       {run.schedule_valid && run.optimized && (
         <>
           <Tiles run={run} currency={currency} month={month} />
+          <Comparison run={run} currency={currency} />
           <ScheduleTable items={run.items} timeFormat={timeFormat} />
           {run.profile && (
             <ChartCard
@@ -133,22 +136,53 @@ function Tiles({ run, currency, month }: { run: OptimizationRun; currency: strin
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatTile
+        index={0}
         label={`Estimated bill, ${month}`}
         value={after.monthly_bill !== null ? formatMoney(after.monthly_bill, currency) : 'No tariff'}
         detail={before.monthly_bill !== null ? `Current schedule: ${formatMoney(before.monthly_bill, currency)}` : 'Add a tariff to see costs'}
       />
       <StatTile
+        index={1}
+        floating={savings !== null && savings > 0}
+        highlight={savings !== null && savings > 0}
         label="Estimated savings"
         value={savings === null ? '—' : formatMoney(savings, currency)}
         detail={savings === null ? undefined : savings < 0 ? 'Costs more than your current schedule' : 'Per month, estimated'}
       />
-      <StatTile label="Peak demand (worst case)" value={formatKw(after.peak_kw)} detail={`Current schedule: ${formatKw(before.peak_kw)}`} />
+      <StatTile index={2} label="Peak demand (worst case)" value={formatKw(after.peak_kw)} detail={`Current schedule: ${formatKw(before.peak_kw)}`} />
       <StatTile
+        index={3}
         label="Time over load limit"
         value={run.load_limit_kw === null ? '—' : `${after.minutes_over_limit} min/week`}
         detail={run.load_limit_kw === null ? 'No limit set' : `Current schedule: ${before.minutes_over_limit} min/week`}
       />
     </div>
+  );
+}
+
+/** Before and after on one shared scale: the bar lengths are the real figures, so the difference is not exaggerated. */
+function Comparison({ run, currency }: { run: OptimizationRun; currency: string | null }) {
+  const before = run.baseline;
+  const after = run.optimized;
+  if (!after) return null;
+  const hasBill = before.monthly_bill !== null && after.monthly_bill !== null;
+  return (
+    <Card title="Before and after" description="Your current schedule against the recommended one." index={4}>
+      <div className="grid gap-8 md:grid-cols-2">
+        {hasBill && before.monthly_bill !== null && after.monthly_bill !== null && (
+          <BeforeAfterBars
+            label="Estimated monthly bill"
+            before={{ label: 'Current schedule', value: before.monthly_bill, display: formatMoney(before.monthly_bill, currency) }}
+            after={{ label: 'Recommended schedule', value: after.monthly_bill, display: formatMoney(after.monthly_bill, currency) }}
+          />
+        )}
+        <BeforeAfterBars
+          label="Peak demand, worst case"
+          before={{ label: 'Current schedule', value: before.peak_kw, display: formatKw(before.peak_kw) }}
+          after={{ label: 'Recommended schedule', value: after.peak_kw, display: formatKw(after.peak_kw) }}
+        />
+      </div>
+    </Card>
   );
 }
 
@@ -168,8 +202,8 @@ export function ScheduleTable({ items, timeFormat }: { items: ScheduleItem[]; ti
             </tr>
           </thead>
           <tbody className="divide-y divide-border align-top">
-            {items.map((item) => (
-              <tr key={item.appliance_id}>
+            {items.map((item, index) => (
+              <tr key={item.appliance_id} className="animate-rise" style={revealDelay(index + 2)}>
                 <th scope="row" className="py-3 pr-4 font-medium">
                   {item.name}
                   <span className="block text-xs font-normal text-muted">
@@ -179,7 +213,7 @@ export function ScheduleTable({ items, timeFormat }: { items: ScheduleItem[]; ti
                 <td className="py-3 pr-4 whitespace-nowrap tabular-nums">{formatMinute(item.baseline_start_minute, timeFormat)}</td>
                 <td className="py-3 pr-4 whitespace-nowrap tabular-nums">
                   {item.moved ? (
-                    <span className="flex items-center gap-1.5 font-medium text-accent">
+                    <span className="flex items-center gap-1.5 font-medium text-accent-ink">
                       <ArrowRight aria-hidden className="size-3.5" />
                       {formatWindow(item.start_minute, item.end_minute, timeFormat)}
                     </span>
@@ -232,7 +266,7 @@ export function ValidationCard({ checks }: { checks: ValidationCheck[] }) {
 
 function SolverDetails({ run }: { run: OptimizationRun }) {
   return (
-    <details className="rounded-xl border border-border bg-surface p-4 text-sm shadow-sm">
+    <details className="rounded-card border border-border bg-surface p-4 text-sm shadow-card">
       <summary className="cursor-pointer font-medium">
         Solver details: {run.status}, {run.solve_time_ms} ms
       </summary>

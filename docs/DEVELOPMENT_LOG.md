@@ -313,3 +313,50 @@ Substeps A-L, each tested before the next.
 - The 194 MB backend is mostly OR-Tools; it could be trimmed later.
 - WebView2 saves downloads silently to Downloads; there is no "Save as" dialog.
 - The test data created by this verification (sample data, one appliance, one backup) remains in `%APPDATA%\com.powershift.app` and in Downloads; nothing was cleaned up, as requested.
+
+## UI redesign: black and electric lime (after Stage 9)
+
+Branch `redesign/black-lime`, built on the Stage 9 baseline `8573d87` (history untouched).
+
+### Decisions
+- **Presentation only.** No backend, API, database or migration change. Every number on screen comes from a query that already existed.
+- **Tokens, then components, then pages.** All colours were already semantic tokens, so replacing the token values re-themed the whole app; components were restyled once and the pages followed.
+- **Lime has two jobs, so two tokens.** A lime fill with black text works everywhere (17.8:1); lime as text works on dark but fails on white (1.2:1), so text and outlines use `accent-ink` (olive in the light theme).
+- **Chart colours carry meaning.** Grey is fixed load; lime is the flexible load the scheduler can move. Single-series charts use lime.
+- **Motion budget.** Only `transform` and `opacity`; at most three infinite animations on the dashboard; one featured floating tile; no blur filters; none of it runs under reduced motion. The proposed particle dots were left out (glow plus faint grid only), as agreed.
+- **Honest motion.** The scheduler's running state shows real elapsed seconds and the chosen limit, never a percentage. The potential-savings tile floats and turns lime only for a validated, cost-reducing run.
+- **Open questions answered with the recommended defaults:** Appliances stays a table; light theme kept; system font (no new dependency); no particle dots.
+
+### Built
+- Tokens and motion CSS; `Button`, `Card`, `StatTile`, `Badge`, `EmptyState`, `SegmentedControl`, inputs, `Modal` restyled; new `AppBackdrop`, `ProgressBeam`, `BeforeAfterBars`.
+- Collapsible sidebar (remembered), lime active indicator, page fade, backdrop.
+- Dashboard: energy, bill, peak and savings tiles; hourly profile; scheduler summary with before/after; category breakdown; insights; the existing household, engine, simulation and backup cards.
+- Charts re-coloured and animated (draw-in, bar growth, restyled tooltips); 24-hour price strip on time-of-use tariffs.
+- Smart Scheduler: running panel, staggered result, before/after comparison for bill and peak.
+- `docs/DESIGN_SYSTEM.md`.
+
+### Verified
+- 396 backend, 157 frontend (12 new) and 6 Rust tests pass; ruff, mypy, tsc and ESLint clean; production build succeeds (first-screen bundle 374 kB, was 372 kB).
+- In a real browser, dark and light, all nine pages: `axe-core` including colour contrast reported 0 violations, and the page console showed no errors from the app. Screens inspected visually: Overview (dark and light, collapsed sidebar), Appliances, Tariff, Energy, Peak Load, Scheduler (result), Reports, Settings.
+- Measured on the dashboard: three infinite animations (two glows, one floating tile); only `transform` and `opacity` animated.
+
+### Problems met and fixed
+- Light-theme badge contrast 4.48:1 (needs 4.5); the olive was darkened to `#46720d` (5.1:1).
+- Several axe results were measured mid-animation or mid-theme-transition; they disappeared when measured after the animation, and the scan waits 3 s per page.
+- The heavier Overview made one accessibility test exceed the 5-second default under parallel load; the suite timeout was raised to 20 s (nothing was skipped).
+- A shell heredoc failure again required writing larger files with the file tool.
+
+### Known limitations
+- The default theme is still "System": a new installation follows Windows, and a fresh database cannot tell "never chosen" from "chose System". Making Dark the default needs a small backend or settings change, which was not made without approval.
+- Frame rate on slow hardware was not measured.
+- The installer that existed before the redesign did **not** contain it; it has been rebuilt (below).
+
+### Rebuilt installer (redesign)
+- File: `src-tauri/target/release/bundle/nsis/PowerShift_0.1.0_x64-setup.exe`, 60,797,805 bytes (57.98 MiB), built 2026-11-11 15:10:58.
+- SHA-256: `3B0ECA11833CCC662D38F47D1E8A5C2F917D00B72119B1EA5224ADC3F4C61871`. Not code-signed.
+- It **replaced** the Stage 9 installer at the same path (same file name; previous SHA-256 `2AA84D96...`). The old binary can be rebuilt from commit `8573d87`.
+- The backend is unchanged since Stage 9 (`git diff 8573d87 HEAD -- backend` is empty), so the frozen backend was reused, not rebuilt.
+- Tested (silent install, then Start-menu launch, in the same sandbox as Stage 9): installed with exit code 0; the window showed the redesigned interface (black canvas, lime token, backdrop, collapse button, new tiles); the frozen backend connected; the database created by the previous version opened without a migration and showed its data; a PDF export reached the Downloads folder; the tile-text fix is present in this build; uninstall removed the program, shortcut and registry entry. Row counts, theme and integrity of the user database were identical to a backup taken earlier. (The file's bytes changed because SQLite merged its write-ahead log after I force-stopped the test app; no data changed.)
+- Not tested: installation on your own laptop; the installer's wizard pages; frame rate on slow hardware.
+- Observed twice: the app window did not respond to a programmatic "close window" request and had to be force-stopped (earlier in Stage 9 it closed normally). Whether this is only an effect of the remote-debugging session used for testing is not established.
+

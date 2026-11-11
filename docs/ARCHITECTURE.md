@@ -281,3 +281,14 @@ total, 194 MB). The installer writes a Start-menu shortcut and a per-user uninst
 
 Security settings are unchanged: the window's content-security policy only allows connections to `127.0.0.1`, and
 every API call needs the random token.
+
+## Visual design layer (after Stage 9)
+
+The redesign changed **only the frontend presentation**. No route, API, request or response shape, backend module, database
+table or migration changed.
+
+- **Tokens first.** Every colour lives in `src/index.css` as a CSS variable with a semantic Tailwind name; the dark theme is the primary one. Lime has two tokens: `accent` (fills, always with black text) and `accent-ink` (lime used as text or outlines, a darker olive in the light theme). Details: [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+- **Components carry the look.** `Card`, `StatTile`, `Button` and friends were restyled in place, so the nine pages followed automatically. New pieces: `AppBackdrop`, `ProgressBeam`, `BeforeAfterBars`, `PriceStrip`, `RunningPanel`, `InsightsCard`, `CategoryBreakdownCard`.
+- **Motion is CSS.** Keyframes are defined once in `index.css` (`@theme`) and used as `animate-rise`, `animate-fade`, `animate-float`, `animate-beam`. Only `transform` and `opacity` change. There is no animation library. Charts use Recharts' own animation, switched through `chartMotion()`, which reads `prefers-reduced-motion`.
+- **Honest data, unchanged.** The new dashboard tiles read existing queries (energy report, bill, peak analysis, optimization history). A savings figure is shown only for a schedule that passed independent validation; `OPTIMAL` and `FEASIBLE` are worded differently (lime "proven optimal" versus amber "valid, not proven optimal").
+- **Dependencies:** none added or removed.

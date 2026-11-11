@@ -1,6 +1,6 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { DataTable } from '@/components/charts/ChartCard';
-import { AxisUnit, AXIS_PROPS, BAR_RADIUS_TOP, GRID_PROPS, SERIES, TOOLTIP_CURSOR, TooltipBox } from '@/components/charts/chartTheme';
+import { AxisUnit, AXIS_PROPS, BAR_RADIUS_TOP, GRID_PROPS, SERIES, TOOLTIP_CURSOR, TooltipBox, chartMotion } from '@/components/charts/chartTheme';
 import type { DayRow } from '@/features/energy/types';
 import { formatDayLong, formatDayShort } from '@/lib/dates';
 import { formatKwh, formatMoney } from '@/lib/format';
@@ -14,7 +14,7 @@ export function DailyEnergyChart({ daily, currency }: { daily: DayRow[]; currenc
   const renderTooltip = ({ active, payload }: TooltipProps) => {
     const day = payload?.[0]?.payload as DayRow | undefined;
     if (!active || !day) return null;
-    const rows: Array<{ label: string; value: string; color?: string }> = [{ label: 'Energy', value: formatKwh(day.kwh), color: SERIES.primary }];
+    const rows: Array<{ label: string; value: string; color?: string }> = [{ label: 'Energy', value: formatKwh(day.kwh), color: SERIES.highlight }];
     if (day.energy_charge !== null) rows.push({ label: 'Energy charge', value: formatMoney(day.energy_charge, currency) });
     return <TooltipBox title={formatDayLong(day.date)} rows={rows} />;
   };
@@ -29,7 +29,7 @@ export function DailyEnergyChart({ daily, currency }: { daily: DayRow[]; currenc
           <XAxis dataKey="date" {...AXIS_PROPS} tickFormatter={formatDayShort} minTickGap={16} />
           <YAxis {...AXIS_PROPS} width={40} />
           <Tooltip cursor={TOOLTIP_CURSOR} content={renderTooltip} />
-          <Bar dataKey="kwh" fill={SERIES.primary} radius={BAR_RADIUS_TOP} maxBarSize={24} isAnimationActive={false} />
+          <Bar dataKey="kwh" fill={SERIES.highlight} radius={BAR_RADIUS_TOP} maxBarSize={14} {...chartMotion()} />
         </BarChart>
       </ResponsiveContainer>
     </div>

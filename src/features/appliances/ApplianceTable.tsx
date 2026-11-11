@@ -14,7 +14,7 @@ interface ApplianceTableProps {
 
 export function ApplianceTable({ appliances, timeFormat, onEdit, onDelete }: ApplianceTableProps) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-surface shadow-sm">
+    <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-card">
       <table className="w-full text-left text-sm">
         <thead className="border-b border-border bg-surface-raised text-xs uppercase tracking-wide text-muted">
           <tr>

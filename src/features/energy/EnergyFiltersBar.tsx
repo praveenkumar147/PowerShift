@@ -19,7 +19,7 @@ export function EnergyFiltersBar({ filters, onChange, error }: EnergyFiltersBarP
   ];
 
   return (
-    <div className="mb-6 rounded-xl border border-border bg-surface p-4 shadow-sm">
+    <div className="mb-6 rounded-card border border-border bg-surface p-4 shadow-card">
       <div className="grid items-end gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
         <Field label="From" error={error}>
           {(p) => <TextInput {...p} type="date" value={filters.start} max={filters.end} onChange={(e) => e.target.value && onChange({ ...filters, start: e.target.value })} />}
@@ -45,7 +45,7 @@ export function EnergyFiltersBar({ filters, onChange, error }: EnergyFiltersBarP
               key={preset.label}
               type="button"
               onClick={() => onChange({ ...filters, ...preset.range })}
-              className="rounded-md border border-border px-3 py-2 text-sm text-muted hover:bg-surface-raised hover:text-fg"
+              className="rounded-control border border-border px-3 py-2 text-sm text-muted hover:bg-surface-raised hover:text-fg"
             >
               {preset.label}
             </button>

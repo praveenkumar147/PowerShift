@@ -2,8 +2,8 @@ import type { InputHTMLAttributes, SelectHTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 
 export const CONTROL_CLASSES = cn(
-  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg',
-  'placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25',
+  'w-full rounded-control border border-border bg-surface-raised px-3 py-2 text-sm text-fg transition-colors',
+  'placeholder:text-muted focus:border-accent-ink focus:outline-none focus:ring-2 focus:ring-accent-ink/25',
   'aria-[invalid=true]:border-danger disabled:opacity-60',
 );
 
@@ -23,7 +23,7 @@ interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'typ
 export function Checkbox({ label, description, className, ...props }: CheckboxProps) {
   return (
     <label className={cn('flex cursor-pointer items-start gap-3', className)}>
-      <input type="checkbox" className="mt-0.5 size-4 accent-[var(--ps-accent)]" {...props} />
+      <input type="checkbox" className="mt-0.5 size-4 accent-[var(--ps-accent-ink)]" {...props} />
       <span>
         <span className="block text-sm font-medium">{label}</span>
         {description && <span className="block text-xs text-muted">{description}</span>}

@@ -1,4 +1,5 @@
 import { AlertTriangle, Zap } from 'lucide-react';
+import { AppBackdrop } from '@/components/ui/AppBackdrop';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 
@@ -9,9 +10,10 @@ interface StartupScreenProps {
 
 export function StartupScreen({ error, onRetry }: StartupScreenProps) {
   return (
-    <main className="flex h-full items-center justify-center p-8">
-      <div className="w-full max-w-md rounded-xl border border-border bg-surface p-8 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-lg bg-accent-soft text-accent">
+    <main className="relative flex h-full items-center justify-center p-8">
+      <AppBackdrop />
+      <div className="relative z-10 w-full max-w-md animate-rise rounded-card border border-border bg-surface p-8 text-center shadow-float">
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-control bg-accent text-accent-fg">
           {error ? <AlertTriangle aria-hidden className="size-6" /> : <Zap aria-hidden className="size-6" />}
         </div>
         {error ? (

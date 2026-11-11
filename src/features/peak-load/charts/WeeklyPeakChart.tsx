@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AxisUnit, AXIS_PROPS, BAR_RADIUS_TOP, GRID_PROPS, niceCeiling, SERIES, TOOLTIP_CURSOR, TooltipBox } from '@/components/charts/chartTheme';
+import { AxisUnit, AXIS_PROPS, BAR_RADIUS_TOP, GRID_PROPS, niceCeiling, SERIES, TOOLTIP_CURSOR, TooltipBox, chartMotion } from '@/components/charts/chartTheme';
 import { WEEKDAY_SHORT } from '@/features/appliances/types';
 import type { DaySummary } from '@/features/peak-load/types';
 import { formatKw } from '@/lib/format';
@@ -25,7 +25,7 @@ export function WeeklyPeakChart({ week, limitKw, selected, onSelect, timeFormat 
     const day = payload?.[0]?.payload as DaySummary | undefined;
     if (!active || !day) return null;
     const rows = [
-      { label: 'Peak (worst case)', value: formatKw(day.peak_kw), color: SERIES.primary },
+      { label: 'Peak (worst case)', value: formatKw(day.peak_kw), color: SERIES.highlight },
       { label: 'Expected peak', value: formatKw(day.peak_expected_kw) },
       { label: 'Peak starts', value: formatMinute(day.peak_start_minute, timeFormat) },
     ];
@@ -47,12 +47,12 @@ export function WeeklyPeakChart({ week, limitKw, selected, onSelect, timeFormat 
               dataKey="peak_kw"
               radius={BAR_RADIUS_TOP}
               maxBarSize={36}
-              isAnimationActive={false}
+              {...chartMotion()}
               cursor="pointer"
               onClick={(_, index) => onSelect(week[index]?.weekday ?? selected)}
             >
               {week.map((day) => (
-                <Cell key={day.weekday} fill={SERIES.primary} fillOpacity={day.weekday === selected ? 1 : 0.4} />
+                <Cell key={day.weekday} fill={SERIES.highlight} fillOpacity={day.weekday === selected ? 1 : 0.4} />
               ))}
             </Bar>
             {limitKw !== null && <ReferenceLine y={limitKw} stroke="var(--ps-danger)" strokeDasharray="6 4" strokeWidth={2} />}

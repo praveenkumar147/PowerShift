@@ -10,6 +10,8 @@ import { HourlyProfileSection } from '@/features/energy/HourlyProfileSection';
 import { useHousehold } from '@/features/household/api';
 import { HouseholdSummaryCard } from '@/features/overview/HouseholdSummaryCard';
 import { BackupCard, SchedulerCard, SimulationCard } from '@/features/overview/ActivityCards';
+import { CategoryBreakdownCard } from '@/features/overview/CategoryBreakdownCard';
+import { InsightsCard } from '@/features/overview/InsightsCard';
 import { MonthSummary } from '@/features/overview/MonthSummary';
 import { SystemStatusCard } from '@/features/overview/SystemStatusCard';
 
@@ -36,15 +38,30 @@ export function OverviewPage() {
       {household.isSuccess && appliances.isSuccess && !isEmpty && (
         <div className="space-y-6">
           {appliances.data.length > 0 && <MonthSummary currency={currency} />}
+          {appliances.data.length > 0 && (
+            <>
+              <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  <HourlyProfileSection currency={currency} height={220} />
+                </div>
+                <SchedulerCard currency={currency} />
+              </div>
+              <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  <CategoryBreakdownCard currency={currency} />
+                </div>
+                <InsightsCard />
+              </div>
+            </>
+          )}
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="space-y-6 lg:col-span-2">
-              {appliances.data.length > 0 && <HourlyProfileSection currency={currency} height={200} />}
+            <div className="lg:col-span-2">
               <HouseholdSummaryCard household={household.data} appliances={appliances.data} />
             </div>
             <SystemStatusCard />
           </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            <SchedulerCard currency={currency} />
+          <div className="grid gap-6 md:grid-cols-2">
+            {appliances.data.length === 0 && <SchedulerCard currency={currency} />}
             <SimulationCard currency={currency} />
             <BackupCard />
           </div>

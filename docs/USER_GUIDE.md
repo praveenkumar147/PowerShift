@@ -214,9 +214,17 @@ scenarios show "Edited since last run".
 
 ## Overview
 
-Shows this month's estimated energy, bill, average per day and the share of energy
-that comes from flexible appliances (what a scheduler could shift), plus the hourly
-profile, your household summary, and the local engine status.
+Four headline tiles: this month's **energy**, **estimated bill**, **peak demand** (in kW, worst case, with your load limit)
+and **potential savings**. Potential savings is lime and gently floats only when your latest Smart Scheduler run found a
+valid schedule that lowers the bill; with no run, or no valid schedule, it shows a dash and says why. It never shows a
+guess.
+
+Below them: the hourly profile (grey is fixed load, lime is flexible load the scheduler can move), the latest scheduler
+result with a before-and-after bar, where your energy goes by category, **Insights**, your household summary and the
+local engine status.
+
+**Insights** only lists things that are true of your data: amber means your load limit is actually exceeded (with the
+minutes and the peak), lime means you are within it, grey is information such as "no load limit is set".
 
 Three cards summarise your recent work, each with a link to its page:
 
@@ -232,7 +240,20 @@ If something cannot be loaded, that card says so and the others keep working.
 
 Use the switch at the bottom of the sidebar to choose **Light**, **Dark** or
 **System** (follows Windows). Your choice is saved with your data (so it comes back with a restored
-backup) and remembered by the app window.
+backup) and remembered by the app window. Dark (black and lime) is the main look; Light uses the same colours with a darker
+green for text so it stays readable.
+
+## The sidebar
+
+Select **Collapse** at the bottom of the sidebar to shrink it to icons; select the arrow again to expand it. PowerShift
+remembers your choice. The theme switch is shown when the sidebar is expanded.
+
+## Motion
+
+Pages fade in, cards rise in one after another, charts draw in, and a few cards float gently. If you turn on
+*Show animations* off in Windows (Settings > Accessibility > Visual effects), PowerShift shows no animation at all.
+While the Smart Scheduler runs, it shows the real elapsed seconds and your time limit. It does not show a percentage,
+because the solver cannot report one.
 
 ## Keyboard and screen readers
 

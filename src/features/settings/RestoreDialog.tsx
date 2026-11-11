@@ -95,7 +95,7 @@ export function RestoreDialog({ source, onClose }: RestoreDialogProps) {
               <p className="mt-2 text-muted">It was made by an older version and will be upgraded automatically.</p>
             )}
           </div>
-          <p className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-warning">
+          <p className="flex items-start gap-2 rounded-control border border-warning/30 bg-warning/10 px-3 py-2 text-warning">
             <ShieldAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
             <span>
               This replaces <strong>all</strong> your current data. A copy of your current data is saved first, so you can undo the restore.

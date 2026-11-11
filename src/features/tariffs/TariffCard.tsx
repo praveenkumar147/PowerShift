@@ -1,6 +1,7 @@
 import { CheckCircle2, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { PriceStrip } from '@/features/tariffs/PriceStrip';
 import { CHARGE_KIND_LABELS, DAY_TYPE_LABELS, TARIFF_TYPE_LABELS, type Charge, type Tariff } from '@/features/tariffs/types';
 import { formatMoney, formatRate } from '@/lib/format';
 import { formatWindow, type TimeFormat } from '@/lib/time';
@@ -23,7 +24,7 @@ function describeCharge(charge: Charge, currency: string | null): string {
 
 export function TariffCard({ tariff, currency, timeFormat, onEdit, onDelete, onActivate, activating }: TariffCardProps) {
   return (
-    <article className="rounded-xl border border-border bg-surface p-6 shadow-sm" aria-label={tariff.name}>
+    <article className="animate-rise rounded-card border border-border bg-surface p-6 shadow-card" aria-label={tariff.name}>
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -58,8 +59,9 @@ export function TariffCard({ tariff, currency, timeFormat, onEdit, onDelete, onA
           <dt className="text-xs uppercase tracking-wide text-muted">Energy price</dt>
           <dd className="mt-1.5">
             {tariff.tariff_type === 'flat' && tariff.flat_rate_per_kwh !== null && formatRate(tariff.flat_rate_per_kwh, currency)}
+            {tariff.tariff_type === 'tou' && <PriceStrip periods={tariff.tou_periods} />}
             {tariff.tariff_type === 'tou' && (
-              <ul className="space-y-1">
+              <ul className="mt-3 space-y-1">
                 {tariff.tou_periods.map((p, i) => (
                   <li key={i} className="flex justify-between gap-4 tabular-nums">
                     <span>

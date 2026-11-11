@@ -108,8 +108,8 @@ export function ReportsPage() {
                   setKind(r.kind);
                 }}
                 className={cn(
-                  'w-full rounded-xl border p-4 text-left transition-colors',
-                  r.kind === kind ? 'border-accent bg-accent-soft' : 'border-border bg-surface hover:bg-surface-raised',
+                  'w-full rounded-card border p-4 text-left transition-colors',
+                  r.kind === kind ? 'border-accent-ink bg-accent-soft' : 'border-border bg-surface hover:bg-surface-raised',
                 )}
               >
                 <span className="block text-sm font-semibold">{r.title}</span>
@@ -135,13 +135,13 @@ export function ReportsPage() {
             </div>
 
             {missingData && (
-              <div role="status" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-surface-raised px-4 py-3 text-sm">
+              <div role="status" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-control border border-border bg-surface-raised px-4 py-3 text-sm">
                 <span className="text-muted">{missingData.text}</span>
                 {missingData.to && <LinkButton to={missingData.to}>{missingData.label}</LinkButton>}
               </div>
             )}
             {generalError && (
-              <p role="alert" className="mt-4 rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+              <p role="alert" className="mt-4 rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
                 {exportReport.error instanceof ApiError && exportReport.error.status === 0 ? 'The PowerShift backend is not responding.' : generalError}
               </p>
             )}
@@ -161,7 +161,7 @@ export function ReportsPage() {
             </div>
           </Card>
 
-          <section aria-label="What every report states" className="rounded-xl border border-border bg-surface-raised p-4 text-sm text-muted">
+          <section aria-label="What every report states" className="rounded-card border border-border bg-surface-raised p-4 text-sm text-muted">
             <p className="mb-2 font-medium text-fg">Every report states</p>
             <ul className="list-disc space-y-1 pl-5">
               {EVERY_REPORT_STATES.map((item) => (

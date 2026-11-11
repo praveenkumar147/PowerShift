@@ -87,7 +87,7 @@ export function RunControls({ running, error, onRun }: RunControlsProps) {
         </div>
 
         {error && (
-          <p role="alert" className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+          <p role="alert" className="rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
             {error}
           </p>
         )}

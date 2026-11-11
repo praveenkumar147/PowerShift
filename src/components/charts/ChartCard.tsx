@@ -9,12 +9,14 @@ interface ChartCardProps {
   /** Accessible table of the same numbers, shown on demand. */
   table?: ReactNode;
   className?: string;
+  /** Entrance order within a group of cards. */
+  index?: number;
 }
 
 /** A titled chart with an optional "Show data table" view (charts must never be the only way to read the data). */
-export function ChartCard({ title, description, actions, children, table, className }: ChartCardProps) {
+export function ChartCard({ title, description, actions, children, table, className, index }: ChartCardProps) {
   return (
-    <Card className={className}>
+    <Card className={className} {...(index !== undefined ? { index } : {})}>
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">{title}</h2>

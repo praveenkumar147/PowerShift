@@ -33,10 +33,10 @@ export function WeekdayPicker({ values, update, errors }: SectionProps) {
           Operating days
         </span>
         <div className="flex gap-1 text-xs">
-          <button type="button" className="rounded px-2 py-1 text-accent hover:bg-accent-soft" onClick={() => update({ operatingDays: [...ALL_DAYS] })}>
+          <button type="button" className="rounded px-2 py-1 text-accent-ink hover:bg-accent-soft" onClick={() => update({ operatingDays: [...ALL_DAYS] })}>
             Every day
           </button>
-          <button type="button" className="rounded px-2 py-1 text-accent hover:bg-accent-soft" onClick={() => update({ operatingDays: [...WEEKDAYS_ONLY] })}>
+          <button type="button" className="rounded px-2 py-1 text-accent-ink hover:bg-accent-soft" onClick={() => update({ operatingDays: [...WEEKDAYS_ONLY] })}>
             Weekdays
           </button>
         </div>
@@ -49,8 +49,8 @@ export function WeekdayPicker({ values, update, errors }: SectionProps) {
             aria-pressed={selected.has(day)}
             onClick={() => toggle(day)}
             className={cn(
-              'rounded-md border py-2 text-sm transition-colors',
-              selected.has(day) ? 'border-accent bg-accent-soft font-medium text-accent' : 'border-border text-muted hover:text-fg',
+              'rounded-control border py-2 text-sm transition-colors',
+              selected.has(day) ? 'border-accent-ink bg-accent-soft font-medium text-accent-ink' : 'border-border text-muted hover:text-fg',
             )}
           >
             {label}
