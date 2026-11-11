@@ -31,3 +31,19 @@ Thumbs.db
 # Local env files
 .env
 .env.*
+
+# Environment variable templates
+!.env.example
+!.env.sample
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Python virtual environments
+.venv/
+venv/
+
+# Local Claude configuration
+.claude/

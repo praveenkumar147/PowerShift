@@ -1,4 +1,4 @@
-# PowerShift — Intelligent Household Energy Optimization System
+﻿# PowerShift â€” Intelligent Household Energy Optimization System
 
 An offline-first Windows desktop app for estimating household electricity use and
 cost, analysing peak demand, and generating optimized appliance schedules with
@@ -26,6 +26,13 @@ All data stays on your computer. There are no accounts, cloud services or extern
 | Backend | Python 3.13, FastAPI, Pydantic, SQLAlchemy 2, Alembic, Google OR-Tools (CP-SAT) |
 | Database | SQLite (one local file) |
 | Tests | pytest, Vitest, React Testing Library, cargo test |
+
+## Screenshots
+
+![PowerShift Overview](docs/screenshots/overview.png)
+![Appliance Management](docs/screenshots/appliances.png)
+![Smart Scheduler](docs/screenshots/scheduler.png)
+![Simulation Lab](docs/screenshots/simulation.png)
 
 ## Prerequisites (Windows)
 
@@ -141,3 +148,5 @@ check them against the SHA-1 values embedded in `node_modules/@tauri-apps/cli-wi
 - The first screen downloads about 372 kB (117 kB gzipped). The chart library (353 kB, 103 kB gzipped) loads only with pages that draw charts, including the Overview.
 - Holidays and seasonal changes are not modelled: every Monday follows the same routine.
 - All energy figures will be estimates from user-entered data, not measurements.
+
+
