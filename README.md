@@ -10,6 +10,9 @@ Google OR-Tools (CP-SAT).
 > (backups, validated restore, export, reset) work, and the Overview now summarises the scheduler, the
 > Simulation Lab and your backups. A Windows installer (`PowerShift_0.1.0_x64-setup.exe`, 58 MiB) is built, installed,
 > run, and uninstalled in testing (see [Packaging](#packaging-windows)).
+> The interface was redesigned after Stage 9 in black and electric lime with restrained floating motion
+> (see [Design system](docs/DESIGN_SYSTEM.md)). The installer named above was built **before** the redesign and does not
+> contain it; see the development log for the rebuilt installer.
 > See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 All data stays on your computer. There are no accounts, cloud services or external APIs.
@@ -96,6 +99,7 @@ See [docs/TESTING.md](docs/TESTING.md).
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [Design system](docs/DESIGN_SYSTEM.md) (colour tokens, components, motion)
 - [Database design](docs/DATABASE_DESIGN.md)
 - [API](docs/API_DOCUMENTATION.md)
 - [Optimization model](docs/OPTIMIZATION_MODEL.md) (math, constraints, objective, statuses)

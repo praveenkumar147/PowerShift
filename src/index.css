@@ -96,7 +96,7 @@
   --ps-muted: #5c5c5c;
   --ps-accent: #c6ff33;
   --ps-accent-fg: #000000;
-  --ps-accent-ink: #4d7c0f;
+  --ps-accent-ink: #46720d;
   --ps-accent-soft: #eef7d2;
   --ps-success: #3f6212;
   --ps-warning: #b45309;
@@ -104,7 +104,7 @@
   --ps-danger-fg: #ffffff;
   /* Chart series. Flexible load (what the scheduler can move) is the lime/olive one. */
   --ps-series-1: #8a8a8a;
-  --ps-series-2: #4d7c0f;
+  --ps-series-2: #46720d;
   --ps-grid: #e7e7de;
   --ps-shadow-card: 0 1px 2px rgb(0 0 0 / 0.05);
   --ps-shadow-float: 0 10px 30px -12px rgb(0 0 0 / 0.18);

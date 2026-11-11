@@ -1,6 +1,6 @@
 # Testing
 
-*Last updated: Stage 9. Totals: 396 backend (395 without the frozen backend built), 145 frontend, 6 Rust.*
+*Last updated: after the UI redesign. Totals: 396 backend (395 without the frozen backend built), 157 frontend, 6 Rust.*
 
 ## How to run
 
@@ -89,6 +89,8 @@ in tests are invented round numbers chosen to make hand arithmetic easy.
 | `app/AppShell.test.tsx` (additions) | The window title follows the page and focus moves to the main region after navigating; the skip link is the first tab stop and moves focus to the content |
 | `features/reports/ReportsPage.test.tsx` (addition) | A failed history request says the data could not be loaded instead of "no runs yet", and blocks the export |
 
+| `features/overview/Dashboard.test.tsx` | Real energy, bill and peak tiles; **potential savings only from a valid run** and worded as proven or not proven optimal; a dash (not a number) with no run or no valid schedule; insights warn in amber with real numbers when the limit is exceeded, report "within limit", and say when no limit is set; the sidebar collapses, keeps every link reachable by name and remembers the choice; the scheduler's running panel shows goal, elapsed time and limit but **no percentage**; before/after bars are amber for a worse result and lime for an improvement |
+
 UI tests run against `src/test/fakeBackend.ts`, a small in-memory stand-in for the API,
 so they test the UI's behaviour without depending on the order of requests.
 
@@ -101,7 +103,8 @@ status JSON shape matches the TypeScript type.
 ### Not covered by automated tests
 
 - The installer and the installed app. Tested by hand (see the Stage 9 log entry): silent install, launch from the Start-menu shortcut, frozen backend, data creation and persistence across a restart, PDF/backup/JSON downloads with real mouse clicks, silent uninstall, and byte-for-byte unchanged user data afterwards. These checks are not automated.
-- Colour contrast (needs real layout): checked once per page in a real browser, light and dark, with `axe-core`.
+- Colour contrast (needs real layout): checked in a real browser with `axe-core`, light and dark, on all nine pages after the redesign (0 violations). One genuine failure was found and fixed this way (the light-theme "Active" badge, 4.48:1, now 5.1:1).
+- Animation smoothness on a slow laptop: only the property types (transform/opacity) and the number of looping animations (three) were measured, not frame rates.
 - Actual screen-reader output (NVDA/Narrator). The automated checks cover names, roles and labels, not what is announced.
 - Whether the packaged Tauri window (WebView2) saves downloaded files. Verified only in a browser.
 - How the PDF pages look. Tests check that the PDF is valid and its text is extractable, not the visual layout.
