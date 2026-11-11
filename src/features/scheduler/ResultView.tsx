@@ -179,7 +179,7 @@ export function ScheduleTable({ items, timeFormat }: { items: ScheduleItem[]; ti
                 <td className="py-3 pr-4 whitespace-nowrap tabular-nums">{formatMinute(item.baseline_start_minute, timeFormat)}</td>
                 <td className="py-3 pr-4 whitespace-nowrap tabular-nums">
                   {item.moved ? (
-                    <span className="flex items-center gap-1.5 font-medium text-accent">
+                    <span className="flex items-center gap-1.5 font-medium text-accent-ink">
                       <ArrowRight aria-hidden className="size-3.5" />
                       {formatWindow(item.start_minute, item.end_minute, timeFormat)}
                     </span>

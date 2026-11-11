@@ -107,7 +107,7 @@ function HistoryTable({ runs, shownId, currency, onSelect }: HistoryTableProps) 
                   {r.id === shownId ? (
                     <span className="text-xs text-muted">Shown above</span>
                   ) : (
-                    <button type="button" onClick={() => onSelect(r.id)} className="rounded px-2 py-1 text-accent hover:bg-accent-soft">
+                    <button type="button" onClick={() => onSelect(r.id)} className="rounded px-2 py-1 text-accent-ink hover:bg-accent-soft">
                       View<span className="sr-only"> run #{r.id}</span>
                     </button>
                   )}

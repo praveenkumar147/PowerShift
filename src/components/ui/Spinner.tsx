@@ -5,7 +5,7 @@ export function Spinner({ className, label = 'Loading' }: { className?: string; 
     <div
       role="status"
       aria-label={label}
-      className={cn('size-6 animate-spin rounded-full border-2 border-border border-t-accent', className)}
+      className={cn('size-6 animate-spin rounded-full border-2 border-border border-t-accent-ink', className)}
     />
   );
 }

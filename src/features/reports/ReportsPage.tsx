@@ -109,7 +109,7 @@ export function ReportsPage() {
                 }}
                 className={cn(
                   'w-full rounded-xl border p-4 text-left transition-colors',
-                  r.kind === kind ? 'border-accent bg-accent-soft' : 'border-border bg-surface hover:bg-surface-raised',
+                  r.kind === kind ? 'border-accent-ink bg-accent-soft' : 'border-border bg-surface hover:bg-surface-raised',
                 )}
               >
                 <span className="block text-sm font-semibold">{r.title}</span>

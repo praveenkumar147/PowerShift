@@ -8,7 +8,7 @@ import { useScenarios } from '@/features/simulation/api';
 import { formatDateTime } from '@/lib/dates';
 import { formatKw, formatSignedMoney } from '@/lib/format';
 
-const linkClass = 'text-sm font-medium text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
+const linkClass = 'text-sm font-medium text-accent-ink underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink';
 
 function Failed({ message }: { message: string }) {
   return (

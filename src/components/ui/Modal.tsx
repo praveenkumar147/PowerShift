@@ -60,7 +60,7 @@ export function Modal({ title, description, onClose, children, footer, size = 's
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center animate-fade bg-black/70 p-6">
       <div
         ref={panelRef}
         role="dialog"

@@ -4,12 +4,22 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design tokens. Components use semantic names (bg-surface, text-muted…) instead of
- * raw colours, so light/dark themes only change these variables.
+ * PowerShift design tokens: black + electric lime.
+ *
+ * Components use semantic names (bg-surface, text-muted, bg-accent…) and never raw colours, so the
+ * two themes only differ in the variables at the bottom of this file. Full reference:
+ * docs/DESIGN_SYSTEM.md.
+ *
+ * Lime has two jobs, so it has two tokens:
+ *   accent      the FILL (buttons, bars, indicators). Always lime, always paired with black text.
+ *   accent-ink  lime used AS TEXT, icons, outlines. Lime on dark; a deeper olive on light, because
+ *               lime on white is only 1.2:1.
+ *
  * System font stack: offline, and Segoe UI Variable on Windows 11.
  */
 @theme {
   --font-sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
 
   --color-canvas: var(--ps-canvas);
@@ -20,52 +30,112 @@
   --color-muted: var(--ps-muted);
   --color-accent: var(--ps-accent);
   --color-accent-fg: var(--ps-accent-fg);
+  --color-accent-ink: var(--ps-accent-ink);
   --color-accent-soft: var(--ps-accent-soft);
   --color-success: var(--ps-success);
   --color-warning: var(--ps-warning);
   --color-danger: var(--ps-danger);
   --color-danger-fg: var(--ps-danger-fg);
+
+  --radius-card: 14px;
+  --radius-control: 10px;
+
+  --shadow-card: var(--ps-shadow-card);
+  --shadow-float: var(--ps-shadow-float);
+
+  /* Motion. Only transform and opacity are animated, so everything runs on the GPU. */
+  --animate-float: ps-float 7s ease-in-out infinite;
+  --animate-rise: ps-rise 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade: ps-fade 240ms ease-out both;
+  --animate-beam: ps-beam 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+
+  @keyframes ps-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+  @keyframes ps-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes ps-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes ps-beam {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(260%);
+    }
+  }
 }
 
+/* Light theme. */
 :root {
-  --ps-canvas: #f4f6f8;
+  --ps-canvas: #f4f4ef;
   --ps-surface: #ffffff;
-  --ps-surface-raised: #f8fafb;
-  --ps-border: #e1e6eb;
-  --ps-fg: #16202a;
-  --ps-muted: #5d6b78;
-  --ps-accent: #0f766e;
-  --ps-accent-fg: #ffffff;
-  --ps-accent-soft: #e3f3f1;
-  --ps-success: #15803d;
+  --ps-surface-raised: #f7f7f2;
+  --ps-border: #e1e1d8;
+  --ps-fg: #0a0a0a;
+  --ps-muted: #5c5c5c;
+  --ps-accent: #c6ff33;
+  --ps-accent-fg: #000000;
+  --ps-accent-ink: #4d7c0f;
+  --ps-accent-soft: #eef7d2;
+  --ps-success: #3f6212;
   --ps-warning: #b45309;
-  --ps-danger: #b91c1c;
+  --ps-danger: #c62828;
   --ps-danger-fg: #ffffff;
-  /* Chart series (validated for colour-vision deficiency and contrast, both themes). */
-  --ps-series-1: #2a78d6; /* blue: fixed load, single-series charts */
-  --ps-series-2: #eb6834; /* orange: flexible load */
-  --ps-grid: #e6eaee;
+  /* Chart series. Flexible load (what the scheduler can move) is the lime/olive one. */
+  --ps-series-1: #8a8a8a;
+  --ps-series-2: #4d7c0f;
+  --ps-grid: #e7e7de;
+  --ps-shadow-card: 0 1px 2px rgb(0 0 0 / 0.05);
+  --ps-shadow-float: 0 10px 30px -12px rgb(0 0 0 / 0.18);
+  --ps-glow: rgb(198 255 51 / 0.28);
   color-scheme: light;
 }
 
+/* Dark theme: the primary look. Black, near-black surfaces, one lime accent. */
 .dark {
-  --ps-canvas: #0d1318;
-  --ps-surface: #141c23;
-  --ps-surface-raised: #1a242d;
-  --ps-border: #26323d;
-  --ps-fg: #e6edf3;
-  --ps-muted: #8d9aa6;
-  --ps-accent: #2dd4bf;
-  --ps-accent-fg: #062a26;
-  --ps-accent-soft: #123230;
-  --ps-success: #4ade80;
-  --ps-warning: #fbbf24;
-  --ps-danger: #f87171;
-  /* Dark text on the light red: white on this red is only 2.8:1. */
-  --ps-danger-fg: #450a0a;
-  --ps-series-1: #3987e5;
-  --ps-series-2: #d95926;
-  --ps-grid: #233039;
+  --ps-canvas: #000000;
+  --ps-surface: #111111;
+  --ps-surface-raised: #1b1b1b;
+  --ps-border: #292929;
+  --ps-fg: #ffffff;
+  --ps-muted: #a3a3a3;
+  --ps-accent: #c6ff33;
+  --ps-accent-fg: #000000;
+  --ps-accent-ink: #c6ff33;
+  /* Lime at 12% over the card colour. */
+  --ps-accent-soft: #272e15;
+  --ps-success: #c6ff33;
+  --ps-warning: #ffc857;
+  --ps-danger: #ff5555;
+  /* Black on this red is 6.7:1; white on it would be only 3.1:1. */
+  --ps-danger-fg: #000000;
+  --ps-series-1: #7a7a7a;
+  --ps-series-2: #c6ff33;
+  --ps-grid: #222222;
+  --ps-shadow-card: 0 0 0 transparent;
+  --ps-shadow-float: 0 14px 36px -14px rgb(0 0 0 / 0.9);
+  --ps-glow: rgb(198 255 51 / 0.1);
   color-scheme: dark;
 }
 
@@ -79,7 +149,88 @@ body {
   @apply bg-canvas text-fg font-sans antialiased;
 }
 
-/* People who ask their system for less motion get no spinning or sliding. */
+::selection {
+  background: var(--ps-accent);
+  color: #000;
+}
+
+/* Slim scrollbars that match the surfaces (WebView2 is Chromium). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ps-border) transparent;
+}
+
+/*
+ * Atmosphere: two soft lime glows that drift very slowly, and a faint grid. One fixed layer
+ * behind the content; it only ever moves with `transform`, so it costs almost nothing.
+ */
+.ps-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ps-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--ps-grid) 1px, transparent 1px), linear-gradient(90deg, var(--ps-grid) 1px, transparent 1px);
+  background-size: 56px 56px;
+  opacity: 0.35;
+  mask-image: radial-gradient(ellipse 70% 60% at 70% 0%, #000 0%, transparent 75%);
+}
+.ps-glow {
+  position: absolute;
+  width: 46vmax;
+  height: 46vmax;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--ps-glow), transparent);
+  will-change: transform;
+}
+.ps-glow-a {
+  top: -22vmax;
+  right: -10vmax;
+  animation: ps-drift-a 48s ease-in-out infinite alternate;
+}
+.ps-glow-b {
+  bottom: -26vmax;
+  left: 12vmax;
+  animation: ps-drift-b 64s ease-in-out infinite alternate;
+}
+@keyframes ps-drift-a {
+  to {
+    transform: translate3d(-8vmax, 6vmax, 0);
+  }
+}
+@keyframes ps-drift-b {
+  to {
+    transform: translate3d(10vmax, -5vmax, 0);
+  }
+}
+
+/* Charts: line draw-in and bar growth (transform/opacity only; no layout work). */
+.ps-grow-y {
+  transform-origin: bottom;
+  animation: ps-grow-y 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ps-grow-x {
+  transform-origin: left;
+  animation: ps-grow-x 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes ps-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes ps-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* People who ask their system for less motion get no spinning, floating or sliding. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -89,5 +240,7 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .ps-glow {
+    animation: none !important;
+  }
 }
-
