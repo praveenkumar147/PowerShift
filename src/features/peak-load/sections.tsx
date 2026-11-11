@@ -39,7 +39,7 @@ export function LimitAlerts({ analysis, timeFormat }: { analysis: PeakLoadAnalys
   const limit = analysis.load_limit_kw;
   if (limit === null) {
     return (
-      <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3 text-sm">
+      <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface-raised px-4 py-3 text-sm">
         <span className="flex items-center gap-2 text-muted">
           <Info aria-hidden className="size-4" /> No household load limit is set, so overloads can't be checked.
         </span>
@@ -49,7 +49,7 @@ export function LimitAlerts({ analysis, timeFormat }: { analysis: PeakLoadAnalys
   }
   if (analysis.violations.length === 0) return null;
   return (
-    <div role="alert" className="rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm">
+    <div role="alert" className="rounded-card border border-danger/30 bg-danger/5 px-4 py-3 text-sm">
       <p className="flex items-center gap-2 font-medium text-danger">
         <AlertTriangle aria-hidden className="size-4" />
         Load limit exceeded on {WEEKDAY_SHORT[analysis.weekday]} ({formatKw(limit)} limit)

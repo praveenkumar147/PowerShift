@@ -4,11 +4,11 @@ import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Spinner } from '@/components/ui/Spinner';
 import { useHousehold, useTimeFormat } from '@/features/household/api';
 import { useOptimizationHistory, useOptimizationRun, useRunOptimization } from '@/features/scheduler/api';
 import { ResultView } from '@/features/scheduler/ResultView';
 import { RunControls } from '@/features/scheduler/RunControls';
+import { RunningPanel } from '@/features/scheduler/RunningPanel';
 import { PRIORITY_LABELS, type OptimizationSummary } from '@/features/scheduler/types';
 import { formatDateTime } from '@/lib/dates';
 import { formatKw, formatMoney } from '@/lib/format';
@@ -36,7 +36,7 @@ export function SchedulerPage() {
           onRun={(request) => optimize.mutate(request, { onSuccess: (result) => setSelectedId(result.id) })}
         />
 
-        {optimize.isPending && <Spinner label="Optimizing" />}
+        {optimize.isPending && <RunningPanel request={optimize.variables} />}
         {run.isError && (
           <p role="alert" className="text-sm text-danger">
             {run.error.message}

@@ -29,7 +29,7 @@ export function DailyEnergyChart({ daily, currency }: { daily: DayRow[]; currenc
           <XAxis dataKey="date" {...AXIS_PROPS} tickFormatter={formatDayShort} minTickGap={16} />
           <YAxis {...AXIS_PROPS} width={40} />
           <Tooltip cursor={TOOLTIP_CURSOR} content={renderTooltip} />
-          <Bar dataKey="kwh" fill={SERIES.highlight} radius={BAR_RADIUS_TOP} maxBarSize={24} {...chartMotion()} />
+          <Bar dataKey="kwh" fill={SERIES.highlight} radius={BAR_RADIUS_TOP} maxBarSize={14} {...chartMotion()} />
         </BarChart>
       </ResponsiveContainer>
     </div>

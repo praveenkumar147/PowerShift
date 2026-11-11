@@ -70,7 +70,7 @@ export function ComparisonCard({ scenarios, currency }: ComparisonCardProps) {
   return (
     <Card title="Comparison" description={`Estimated figures for ${month}, each scenario against your current household.`}>
       {baselinesDiffer(columns) && (
-        <p role="status" className="mb-4 flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+        <p role="status" className="mb-4 flex items-start gap-2 rounded-control border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
           <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0" />
           Some results were calculated when your household was different, so the comparison is not fair. Run all scenarios again.
         </p>

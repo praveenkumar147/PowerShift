@@ -6,7 +6,7 @@ export function LinkButton({ to, children }: { to: string; children: ReactNode }
   return (
     <Link
       to={to}
-      className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+      className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
     >
       {children}
     </Link>

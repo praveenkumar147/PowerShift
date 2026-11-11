@@ -91,7 +91,7 @@ export function ScenarioForm(props: ScenarioFormProps) {
     >
       <form id={FORM_ID} onSubmit={submit} noValidate className="space-y-6">
         {general.length > 0 && (
-          <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+          <div role="alert" className="rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
             {general.map((m) => (
               <p key={m}>{m}</p>
             ))}

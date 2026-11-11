@@ -49,7 +49,7 @@ export function WeekdayPicker({ values, update, errors }: SectionProps) {
             aria-pressed={selected.has(day)}
             onClick={() => toggle(day)}
             className={cn(
-              'rounded-md border py-2 text-sm transition-colors',
+              'rounded-control border py-2 text-sm transition-colors',
               selected.has(day) ? 'border-accent-ink bg-accent-soft font-medium text-accent-ink' : 'border-border text-muted hover:text-fg',
             )}
           >

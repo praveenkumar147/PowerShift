@@ -35,7 +35,7 @@ export function ScenarioCard({ scenario, currency, timeFormat, running, expanded
   const priority = PRIORITY_LABELS[scenario.priority];
 
   return (
-    <article aria-label={scenario.name} className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+    <article aria-label={scenario.name} className="rounded-card border border-border bg-surface p-6 shadow-card">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">

@@ -58,7 +58,7 @@ export function SimulationPage() {
         </p>
       )}
       {run.isError && (
-        <div role="alert" className="mb-4 rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+        <div role="alert" className="mb-4 rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
           <p className="font-medium">{run.error.message}</p>
           {Object.values(fieldErrorsOf(run.error)).map((message) => (
             <p key={message}>{message}</p>

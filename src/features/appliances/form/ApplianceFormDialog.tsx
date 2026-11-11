@@ -105,7 +105,7 @@ export function ApplianceFormDialog({ appliance, onClose, onSubmitInput, title, 
     >
       <form ref={formRef} id={FORM_ID} onSubmit={onSubmit} noValidate className="space-y-8">
         {hasErrors && (
-          <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+          <div role="alert" className="rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
             <p className="font-medium">
               {save.error instanceof ApiError && save.error.status !== 422 ? save.error.message : 'Some values need attention.'}
             </p>

@@ -33,7 +33,7 @@ export function MonthlyProjectionChart({ months, currency }: { months: MonthRow[
           <XAxis dataKey="month" {...AXIS_PROPS} tickFormatter={monthShort} />
           <YAxis {...AXIS_PROPS} width={44} />
           <Tooltip cursor={TOOLTIP_CURSOR} content={renderTooltip} />
-          <Bar dataKey="kwh" fill={SERIES.highlight} radius={BAR_RADIUS_TOP} maxBarSize={28} {...chartMotion()} />
+          <Bar dataKey="kwh" fill={SERIES.highlight} radius={BAR_RADIUS_TOP} maxBarSize={20} {...chartMotion()} />
         </BarChart>
       </ResponsiveContainer>
     </div>

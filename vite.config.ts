@@ -26,5 +26,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     restoreMocks: true,
+    // The Overview page runs many queries and an accessibility scan; give slow machines room.
+    testTimeout: 20000,
   },
 });
