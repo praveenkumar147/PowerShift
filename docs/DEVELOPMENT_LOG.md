@@ -349,4 +349,14 @@ Branch `redesign/black-lime`, built on the Stage 9 baseline `8573d87` (history u
 ### Known limitations
 - The default theme is still "System": a new installation follows Windows, and a fresh database cannot tell "never chosen" from "chose System". Making Dark the default needs a small backend or settings change, which was not made without approval.
 - Frame rate on slow hardware was not measured.
-- The installer that existed before the redesign does **not** contain it; see the packaging notes below this entry once the new installer is built.
+- The installer that existed before the redesign did **not** contain it; it has been rebuilt (below).
+
+### Rebuilt installer (redesign)
+- File: `src-tauri/target/release/bundle/nsis/PowerShift_0.1.0_x64-setup.exe`, 60,797,805 bytes (57.98 MiB), built 2026-11-11 15:10:58.
+- SHA-256: `3B0ECA11833CCC662D38F47D1E8A5C2F917D00B72119B1EA5224ADC3F4C61871`. Not code-signed.
+- It **replaced** the Stage 9 installer at the same path (same file name; previous SHA-256 `2AA84D96...`). The old binary can be rebuilt from commit `8573d87`.
+- The backend is unchanged since Stage 9 (`git diff 8573d87 HEAD -- backend` is empty), so the frozen backend was reused, not rebuilt.
+- Tested (silent install, then Start-menu launch, in the same sandbox as Stage 9): installed with exit code 0; the window showed the redesigned interface (black canvas, lime token, backdrop, collapse button, new tiles); the frozen backend connected; the database created by the previous version opened without a migration and showed its data; a PDF export reached the Downloads folder; the tile-text fix is present in this build; uninstall removed the program, shortcut and registry entry. Row counts, theme and integrity of the user database were identical to a backup taken earlier. (The file's bytes changed because SQLite merged its write-ahead log after I force-stopped the test app; no data changed.)
+- Not tested: installation on your own laptop; the installer's wizard pages; frame rate on slow hardware.
+- Observed twice: the app window did not respond to a programmatic "close window" request and had to be force-stopped (earlier in Stage 9 it closed normally). Whether this is only an effect of the remote-debugging session used for testing is not established.
+
