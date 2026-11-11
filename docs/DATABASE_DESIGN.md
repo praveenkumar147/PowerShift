@@ -1,6 +1,6 @@
 # Database Design
 
-*Describes the schema that exists now. Last updated: Stage 3 (revision `0003`).*
+*Describes the schema that exists now. Last updated: Stage 5 (revision `0004`).*
 The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-database-design).
 
 ## Engine
@@ -18,6 +18,7 @@ The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-data
 | `0001` | `household`, `app_settings` |
 | `0002` | `appliances`, `appliance_operating_days`, `appliance_usage_blocks`, `appliance_flex_constraints` |
 | `0003` | `tariffs`, `tariff_periods`, `tariff_slabs`, `tariff_charges` |
+| `0004` | `optimization_runs`, `optimization_run_items` |
 
 - Alembic scripts live in `backend/powershift/db/migrations/versions/`.
 - The backend upgrades the database to the latest revision automatically at startup.
@@ -173,3 +174,34 @@ database itself, and the scheduler can later query "all flexible appliances" wit
   before deleting the old identical one, which would break the unique constraint.
 - **The flexible-constraint row is updated in place**: its primary key is the appliance id,
   so replacing the object would try to insert a duplicate key.
+
+### `optimization_runs`
+
+One row per solver run, with everything needed to reproduce or investigate it.
+
+| Column | Type | Notes |
+|---|---|---|
+| id, created_at | | created_at indexed |
+| priority | VARCHAR(10) | `cost`, `peak`, `balanced` (CHECK) |
+| balance_weight | INTEGER | 0-100 (CHECK); percent importance of cost for `balanced` |
+| start_step_minutes, time_limit_seconds, random_seed | | solver settings |
+| app_version, solver_version | | e.g. `OR-Tools CP-SAT 9.15.6755` |
+| status | VARCHAR(15) | OPTIMAL, FEASIBLE, INFEASIBLE, UNKNOWN, MODEL_INVALID (CHECK) |
+| schedule_valid | BOOLEAN | true only if a schedule was found AND every independent check passed |
+| solve_time_ms, moved_count | INTEGER | |
+| baseline_bill, optimized_bill | NUMERIC(14,2) NULL | estimated bill for the current month |
+| baseline_peak_kw, optimized_peak_kw | FLOAT | worst-case peak |
+| inputs_json | TEXT | snapshot of appliances, tariff and limit given to the solver |
+| result_json | TEXT | the full response, so an old run is shown exactly as it was |
+
+### `optimization_run_items`
+
+| Column | Type | Notes |
+|---|---|---|
+| id, run_id | | run_id → optimization_runs.id, ON DELETE CASCADE |
+| appliance_id | INTEGER NULL | → appliances.id, **ON DELETE SET NULL**: history survives deleting the appliance |
+| appliance_name | VARCHAR(100) | kept for history |
+| baseline_start_minute, start_minute, end_minute | INTEGER | minutes since midnight |
+
+JSON snapshots are used for inputs and results because a run must stay reproducible and
+displayable after the user edits or deletes appliances.

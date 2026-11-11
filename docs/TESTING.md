@@ -1,6 +1,6 @@
 # Testing
 
-*Last updated: Stage 4. Totals: 168 backend, 67 frontend, 6 Rust.*
+*Last updated: Stage 5. Totals: 245 backend, 76 frontend, 6 Rust.*
 
 ## How to run
 
@@ -35,6 +35,12 @@
 | `integration/test_energy_api.py` | Report with and without a tariff; rounding; category filter; reversed/oversized/garbage date ranges give 422; hourly profile; monthly projection equals the bill; slab note; empty household |
 | `unit/test_peak_load.py` | Worst case vs expected (duty cycle); a 15-minute spike is caught; several peak windows; violation window and culprits; exactly-at-limit is not a violation; no limit; high-demand threshold from limit or peak; heavy overlaps; "not together" conflicts; windows merged across midnight; window edge cases; operating days change each day's peak and the worst-day tie-break; empty household |
 | `integration/test_peak_load_api.py` | Worst day chosen automatically with violation, headroom and contributors; requested weekday; running appliances per step; conflicts; no household limit; empty household; invalid weekday |
+| `optimization/test_a_problem.py` | Candidate starts (grid, window fit, overnight, current start always kept); fixed appliances become base load; power rounds up and limit down; weekly cost per start from TOU prices (168 / 105 / 133 worked by hand); operating days; input validation messages |
+| `optimization/test_b_to_f_constraints.py` | One boolean per candidate; exactly one start; out-of-window starts do not exist; contiguous runs wrap midnight; load limit separates appliances and includes fixed load; infeasibility caused by the limit (proved by relaxing it); not-simultaneous overlap rules per shared day |
+| `optimization/test_g_h_objective_and_solver.py` | Cost goal picks the cheapest hours with least movement; peak used as tie-break; peak goal works under a flat tariff; preferred window never costs money; **solver equals brute-force optimum** for all goals and balance weights 0/25/75/100; goals trade off in the expected order; never worse than a valid current schedule; invalid current schedule repaired; INFEASIBLE returns no schedule; reproducible; status interpretation table incl. "never claim optimal" |
+| `optimization/test_i_validation.py` | Valid schedule passes all 7 checks; missing/non-flexible appliances, off-grid times, wrong duration, out-of-window runs, load-limit violation, overlap and wrong reported numbers are each caught; solver output passes; **validator imports no OR-Tools/builder/runner** |
+| `optimization/test_l_explain_and_diagnose.py` | Reasons from real before/after differences (prices, overlaps, demand, limit, preferred window, 12-hour times); no price reason under a flat tariff; costlier moves disclosed; no optimality claim without proof; diagnostics for fixed load over limit, appliance that cannot fit (with smallest workable limit), limit too low, not-simultaneous blocking |
+| `integration/test_optimization_api.py` | End to end on sample data: cost goal valid and cheaper with 7 passed checks; peak goal never raises the peak; goal trade-off; runs stored and reproducible; household unchanged; infeasible household explained and stored; flat tariff gives 0 savings with a reason; 422 for unsolvable inputs; no tariff/household peak goal; request validation; finer grid at least as good; history survives deleting an appliance |
 | `integration/test_demo_api.py` | Sample data loads and is labelled; produces a 4-line bill; refuses (409) when any real data exists or when loaded twice |
 
 The fixtures in `tests/factories.py` are test data, not product data. Tariff rates
@@ -58,6 +64,7 @@ in tests are invented round numbers chosen to make hand arithmetic easy.
 | `features/tariffs/TariffsPage.test.tsx` | "Never assumes rates" empty state; cards show rates in the household currency; create flat tariff with a charge; TOU payload and backend coverage error; switching the active tariff; warning before deleting the active tariff |
 | `components/charts/chartTheme.test.ts` | Tidy axis maxima (3.76 → 4, 4.3 → 5, 0.16 → 0.2) |
 | `features/peak-load/PeakLoadPage.test.tsx` | Opens on the worst day with headline figures; violation alert with times and culprits; peak contributors and conflicts; switching day sends the weekday and clears the alert; hourly data table; "set a load limit" prompt |
+| `features/scheduler/SchedulerPage.test.tsx` | Empty state and defaults; run sends the chosen settings; verified optimal result with savings, schedule and checks; **time-limited result is never called optimal**; infeasible shows diagnostics and no schedule; **a schedule that fails validation is not presented**; negative savings shown honestly; 422 reason shown; latest run shown and older runs viewable |
 | `features/energy/EnergyPage.test.tsx` | Headline tiles; data tables behind charts; itemised bill; calculation notes; filters sent to the API; "No tariff" state; range error shown on the date field |
 
 UI tests run against `src/test/fakeBackend.ts`, a small in-memory stand-in for the API,

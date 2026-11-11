@@ -4,10 +4,10 @@ An offline-first Windows desktop app for estimating household electricity use an
 cost, analysing peak demand, and generating optimized appliance schedules with
 Google OR-Tools (CP-SAT).
 
-> **Status: Stage 4 complete.** Household profile, appliance management, configurable
-> tariffs, itemised bill estimates, energy analysis charts and peak load analysis
-> (15-minute demand profile, load-limit violations, overlaps) work. The CP-SAT
-> Smart Scheduler comes next in Stage 5.
+> **Status: Stage 5 complete.** Household profile, appliance management, configurable
+> tariffs, bill estimates, energy analysis, peak load analysis and the **CP-SAT Smart
+> Scheduler** (cost / peak / balanced goals, independent validation, explanations,
+> infeasibility diagnostics, run history) work. Simulation Lab comes next in Stage 6.
 > See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 All data stays on your computer. There are no accounts, cloud services or external APIs.
@@ -18,7 +18,7 @@ All data stays on your computer. There are no accounts, cloud services or extern
 |---|---|
 | UI | React 19, TypeScript (strict), Vite, Tailwind CSS 4, React Router, TanStack Query, Recharts, Lucide icons |
 | Desktop shell | Tauri 2 (Rust) |
-| Backend | Python 3.13, FastAPI, Pydantic, SQLAlchemy 2, Alembic |
+| Backend | Python 3.13, FastAPI, Pydantic, SQLAlchemy 2, Alembic, Google OR-Tools (CP-SAT) |
 | Database | SQLite (one local file) |
 | Tests | pytest, Vitest, React Testing Library, cargo test |
 
@@ -96,7 +96,7 @@ See [docs/TESTING.md](docs/TESTING.md).
 - [Architecture](docs/ARCHITECTURE.md)
 - [Database design](docs/DATABASE_DESIGN.md)
 - [API](docs/API_DOCUMENTATION.md)
-- [Optimization model](docs/OPTIMIZATION_MODEL.md)
+- [Optimization model](docs/OPTIMIZATION_MODEL.md) (math, constraints, objective, statuses)
 - [Testing](docs/TESTING.md)
 - [User guide](docs/USER_GUIDE.md)
 - [Development log](docs/DEVELOPMENT_LOG.md)

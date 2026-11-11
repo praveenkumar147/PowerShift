@@ -106,7 +106,7 @@
 - Holidays, seasons and real meter data are not modelled.
 - The main dev database (`backend/.data/`) still has the Stage 2 test entries and no tariff; the sample-data check used a separate test database that was deleted afterwards.
 
-## Stage 4 — Peak load analyzer (2026-11-09) ✅ complete, awaiting approval
+## Stage 4 — Peak load analyzer (2026-11-09) ✅ approved
 
 ### Design decisions
 - **kW only.** Peak analysis never mixes in kWh. Two figures per step: **worst case** (all running appliances at full rated power; drives limit warnings) and **expected** (duty-cycle average).
@@ -130,3 +130,38 @@
 
 ### Not done / deferred
 - The Overview does not yet surface peak warnings; dashboard integration is Stage 8.
+
+## Stage 5 — Optimization engine (2026-11-10 to 2026-11-11) ✅ complete, awaiting approval
+
+Substeps A-L, each tested before the next.
+
+### Design decisions
+- **One start time per flexible appliance**, used on every operating day. Keeps the model small and the advice usable ("run the washer at 16:00"). Per-day schedules are a possible extension.
+- **Candidate starts on a grid** (60/30/15 min) whose whole run fits the window, **plus the usual start**, so a valid current schedule is always available as a fallback and the solver can never return something worse.
+- **Integer scaling**: watts (appliance power rounded up, limit rounded down) and money in 1/10 000. Rounding goes in the safe direction for the limit.
+- **Multi-stage (lexicographic) objectives** with locking constraints, instead of one weighted sum, so goals have a clear priority and no arbitrary magic weights; the *balanced* goal uses a normalised blend (each term divided by its current-schedule value) so money and kilowatts are never added directly.
+- **Movement is the last tie-break**, giving a unique answer and the least change to habits.
+- **Honest statuses**: OPTIMAL only if every stage is OPTIMAL; otherwise FEASIBLE.
+- **Independent validation** in a module that imports nothing from the solver side; a test enforces this. A schedule failing validation is not displayed.
+- **Explanations from measured differences** (prices, overlaps, demand, limit), never templates applied blindly.
+- **History stores JSON snapshots** (inputs and full result) plus items with `ON DELETE SET NULL`, so old runs stay reproducible and readable.
+
+### Built
+- `optimization/`: `problem.py`, `builder.py`, `runner.py`, `metrics.py`, `validation.py`, `diagnose.py`, `explain.py`.
+- Migration `0004`; `POST /api/optimization/run`, `GET /history`, `GET /{id}`.
+- Smart Scheduler page: goal, balance slider, start step, time limit, verdict banner, before/after tiles and load profiles, schedule table with reasons, validation checklist, solver details, history.
+
+### Verified
+- 245 backend tests (incl. brute-force optimum comparison), 76 frontend tests.
+- Live on sample data (lowest cost, 54 ms, OPTIMAL, 7/7 checks): November bill 3,317.48 to 2,920.42 (saving 397.06, re-derived by hand); dishwasher 20:30 to 23:00-01:00 (7.50 to 4.50 per kWh), washer 19:00 to 16:00 (8.50 to 6.00), water heater 07:00 to 05:00 (6.00 to 4.50); peak 3.76 to 3.69 kW; before/after charts share one scale and match the table.
+
+### Problems met and fixed
+- A test assumed the sample household's current schedule was valid; it overlaps two "not together" appliances. Replaced with one valid household plus a separate test that an invalid current schedule is repaired.
+- A validator test expected the wrong overlap minutes (210/week = 30 min x 7 days).
+- mypy: OR-Tools `clear_hints` is untyped; a status variable changed type. Used a distinct name for the combined status.
+- Package metadata used for the solver version, because `ortools.__version__` is not exposed.
+
+### Not done / deferred
+- No button to apply a schedule to the appliances (outside agreed scope; the app recommends only).
+- Overview does not yet show scheduler results (Stage 8 dashboard integration).
+- Per-day start times and per-appliance weights are possible extensions.

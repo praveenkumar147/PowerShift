@@ -1,6 +1,6 @@
 # User Guide
 
-*Covers features available now. Last updated: Stage 4.*
+*Covers features available now. Last updated: Stage 5.*
 
 All numbers PowerShift shows are **estimates** calculated from what you enter.
 PowerShift does not connect to a meter and does not measure anything.
@@ -145,6 +145,34 @@ another day with the buttons or by clicking a bar in **Peak by day**):
 
 Only the flexible part of a peak can be moved; the Smart Scheduler (next stage) does that.
 
+## 6. Smart Scheduler
+
+The scheduler finds start times for your **flexible** appliances that lower your estimated
+cost and/or peak demand, while keeping every run inside the window you allowed, within
+your load limit, and apart from appliances you marked "not at the same time". It never
+changes your appliance settings; it recommends.
+
+1. Choose a **goal**: *Lowest cost*, *Balanced* (use the slider to weigh cost against peak),
+   or *Lowest peak*.
+2. Optionally choose finer **start times** (30 or 15 minutes) and a **time limit**.
+3. Select **Optimize schedule**.
+
+**Reading the result.** The banner says exactly what was proven:
+*Optimal and verified* (best possible for your goal), *Valid but not proven optimal* (the
+time limit ran out; a better schedule may exist), *No valid schedule exists* (with the reason),
+or *No schedule found within the time limit*.
+
+You also get: estimated bill and savings (negative if the new schedule would cost more),
+peak demand and time over the limit, each appliance's usual and recommended start with the
+**reasons**, before/after load profiles on one scale, and an **independent validation**
+checklist. A schedule is only shown as a recommendation if every check passes.
+
+> Savings need a **time-of-use** tariff. Under a flat or slab tariff the bill does not
+> depend on the time of day, so only peak demand and conflicts can improve.
+
+Every run is saved in **History** with its settings, so you can compare goals later.
+Results are estimates from your settings, not measurements or guarantees.
+
 ## Overview
 
 Shows this month's estimated energy, bill, average per day and the share of energy
@@ -158,4 +186,4 @@ Use the switch at the bottom of the sidebar to choose **Light**, **Dark** or
 
 ## Not available yet
 
-The smart scheduler, simulations, reports and backups are added in later stages. Their pages say "Not built yet".
+Simulations, reports and backups are added in later stages. Their pages say "Not built yet".

@@ -1,6 +1,6 @@
 # API Documentation
 
-*Lists implemented endpoints only. Last updated: Stage 4.*
+*Lists implemented endpoints only. Last updated: Stage 5.*
 The planned API is in [STAGE0_PLAN.md §7](STAGE0_PLAN.md#7-api-design).
 
 ## Conventions
@@ -284,3 +284,53 @@ the highest worst-case peak (`selected_automatically: true`).
 | `notes[]` | Assumptions in plain language |
 
 422 if `weekday` is outside 0–6.
+
+---
+
+## Optimization
+
+### `POST /api/optimization/run`
+
+Solves with CP-SAT, validates the result independently, stores the run and returns it (201).
+It never changes appliances, tariffs or the household.
+
+```json
+{ "priority": "balanced", "balance_weight": 50, "start_step_minutes": 60, "time_limit_seconds": 10 }
+```
+
+| Field | Rules |
+|---|---|
+| priority | `cost`, `peak`, `balanced` (default) |
+| balance_weight | 0-100, percent importance of cost; only used for `balanced` |
+| start_step_minutes | 15, 30 or 60 (default 60) |
+| time_limit_seconds | 1-60 (default 10) |
+
+**422** when the problem cannot be solved as configured: no flexible appliances (field
+`appliances`), or a cost/balanced goal without an active tariff (field `priority`).
+An **infeasible** problem is a successful request: status `INFEASIBLE` with `diagnostics[]`.
+
+Response fields:
+
+| Field | Meaning |
+|---|---|
+| `status`, `proven_optimal` | solver status; `proven_optimal` is true only for OPTIMAL |
+| `schedule_valid` | a schedule was found **and** all independent checks passed |
+| `items[]` | per flexible appliance: usual start, recommended start/end, `moved`, `reasons[]` |
+| `baseline`, `optimized` | metrics: `weekly_energy_charge`, `monthly_bill`, `peak_kw`, `peak_expected_kw`, `minutes_over_limit`, `conflict_minutes` |
+| `monthly_savings` | baseline − optimized bill; **negative means it costs more**; null without a priced tariff |
+| `peak_reduction_kw` | baseline − optimized peak |
+| `validation[]` | the independent checks: code, label, passed, detail |
+| `diagnostics[]` | for INFEASIBLE: causes with plain explanations |
+| `stages[]` | each objective stage: name, status, value, seconds |
+| `profile` | before/after 96-step load of the worst baseline weekday |
+| `solver`, `random_seed`, `solve_time_ms` | reproducibility metadata |
+| `notes[]` | assumptions |
+
+### `GET /api/optimization/history`
+
+Most recent runs first (up to 50): id, created_at, priority, status, schedule_valid,
+solve_time_ms, moved_count, baseline/optimized bill and peak.
+
+### `GET /api/optimization/{id}`
+
+The stored run exactly as it was returned. 404 if missing.

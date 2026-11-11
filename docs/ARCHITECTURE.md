@@ -1,6 +1,6 @@
 # Architecture
 
-*Describes what is implemented. Last updated: Stage 4.*
+*Describes what is implemented. Last updated: Stage 5.*
 
 ## Overview
 
@@ -40,7 +40,7 @@
 | `services/` | Use cases: validate, persist, attach estimates and warnings. One request = one transaction | domain, calculation, db, schemas |
 | `domain/` | Pure dataclasses and rules (`ApplianceSpec`, `TimeWindow`, `validate_appliance`) | — |
 | `calculation/` | Pure formulas: `appliance_energy.py` (rated vs average power), `load_profile.py` (96 × 15-minute average-kW profile per appliance per weekday), `tariff_engine.py` (step prices, slabs, itemised bill), `energy_model.py` (periods, months, hours) | domain |
-| `optimization/` | CP-SAT scheduler *(Stage 5)* | domain, calculation |
+| `optimization/` | CP-SAT scheduler: `problem`, `builder`, `runner`, `validation`, `diagnose`, `explain`, `metrics` | domain, calculation (never `db/` or `api/`) |
 | `db/models/` | SQLAlchemy tables | domain (enum values for CHECK constraints) |
 | `db/repositories/` | Queries, plus conversion between rows and domain objects | db/models, domain |
 | `core/` | Config, errors, logging | — |
@@ -143,3 +143,20 @@ is merged across midnight. Episodes found per day:
 - **Conflicts**: ≥ 2 appliances marked "not simultaneous" on together.
 
 `GET /api/peak-load/analysis` without a weekday analyses the day with the highest peak.
+
+## Smart Scheduler pipeline
+
+```
+OptimizationService.run
+ 1 build_problem + validate_problem   plain inputs, integer scaling, explain unsolvable setups
+ 2 build_model (builder.py)            variables, constraints C-F, objective terms
+ 3 solve (runner.py)                   multi-stage objective; one worker + fixed seed = reproducible
+ 4 overall_status                      OPTIMAL only if every stage is proven optimal
+ 5 measure (metrics.py)                before/after bill + peak via the Stage 3-4 engines
+ 6 validate_schedule (validation.py)   re-check WITHOUT the solver; invalid = not shown
+ 7 explain / diagnose                  reasons from measured differences / causes of infeasibility
+ 8 store OptimizationRun (+ items)     inputs, settings, seed, versions, full result
+```
+
+`validation.py` deliberately imports nothing from OR-Tools, the builder, the runner or the
+problem module (enforced by a test), so a bug in the model cannot hide itself.
