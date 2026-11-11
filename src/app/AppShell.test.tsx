@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { NAV_ITEMS } from '@/app/navigation';
@@ -41,8 +41,33 @@ describe('App shell', () => {
 
     await userEvent.click(within(nav).getByRole('link', { name: 'Reports' }));
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Reports' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Reports' })).toBeInTheDocument();
     expect(within(nav).getByRole('link', { name: 'Reports' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('names the window after the page and moves focus to the page after navigating', async () => {
+    installFakeBackend();
+    renderApp();
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
+    await waitFor(() => expect(document.title).toBe('Overview · PowerShift'));
+
+    await userEvent.click(within(nav).getByRole('link', { name: 'Reports' }));
+
+    await screen.findByRole('heading', { level: 1, name: 'Reports' });
+    expect(document.title).toBe('Reports · PowerShift');
+    expect(screen.getByRole('main')).toHaveFocus();
+  });
+
+  it('offers a skip link that moves keyboard focus to the content', async () => {
+    installFakeBackend();
+    renderApp();
+    await screen.findByRole('navigation', { name: 'Main' });
+
+    await userEvent.tab();
+    expect(screen.getByRole('button', { name: 'Skip to main content' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(screen.getByRole('main')).toHaveFocus();
   });
 
   it('loads labelled sample data from the empty overview', async () => {
@@ -60,6 +85,6 @@ describe('App shell', () => {
 
     await userEvent.click(await screen.findByRole('link', { name: 'Set up household' }));
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
   });
 });

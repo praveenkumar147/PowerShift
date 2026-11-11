@@ -4,8 +4,11 @@ import type { ReactElement } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { BackendProvider } from '@/api/BackendProvider';
 import type { BackendConnection } from '@/api/connection';
-import { routes } from '@/app/routes';
+import { preloadPages, routes } from '@/app/routes';
 import { ThemeProvider } from '@/app/theme/ThemeProvider';
+
+// Pages are lazy-loaded in the app; tests load them up front so they appear immediately.
+await preloadPages();
 
 export const TEST_CONNECTION: BackendConnection = { baseUrl: 'http://backend.test', token: 'test-token' };
 

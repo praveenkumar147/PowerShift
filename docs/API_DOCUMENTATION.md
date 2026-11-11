@@ -1,6 +1,6 @@
 # API Documentation
 
-*Lists implemented endpoints only. Last updated: Stage 7.*
+*Lists implemented endpoints only. Last updated: Stage 8.*
 The planned API is in [STAGE0_PLAN.md §7](STAGE0_PLAN.md#7-api-design).
 
 ## Conventions
@@ -427,6 +427,8 @@ default for `scenario_ids` is every scenario that has a result.
 
 | Method | Path | Notes |
 |---|---|---|
+| GET | `/api/settings/preferences` | `{ "theme": "system" \| "light" \| "dark" }`. `system` when nothing was ever chosen (reading writes nothing) |
+| PUT | `/api/settings/preferences` | Body `{ "theme": ... }`; updates the single `app_settings` row (created on first save). Other values or extra fields are `422` |
 | GET | `/api/settings/about` | `app_version`, `schema_revision`, `python_version`, `solver`, `data_dir`, `database_path`, `database_size_bytes`, `backups_dir`, `logs_dir`, `counts` |
 | GET | `/api/settings/backups` | Stored backups, newest first: `name`, `kind` (`manual`, `pre-migration`, `pre-restore`, `pre-reset`, `other`), `size_bytes`, `created_at` |
 | POST | `/api/settings/backup` | 201, the new backup's info. Creates `manual-<UTC time>.db` (SQLite online backup, one self-contained file) |

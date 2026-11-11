@@ -24,6 +24,7 @@
   --color-success: var(--ps-success);
   --color-warning: var(--ps-warning);
   --color-danger: var(--ps-danger);
+  --color-danger-fg: var(--ps-danger-fg);
 }
 
 :root {
@@ -39,6 +40,7 @@
   --ps-success: #15803d;
   --ps-warning: #b45309;
   --ps-danger: #b91c1c;
+  --ps-danger-fg: #ffffff;
   /* Chart series (validated for colour-vision deficiency and contrast, both themes). */
   --ps-series-1: #2a78d6; /* blue: fixed load, single-series charts */
   --ps-series-2: #eb6834; /* orange: flexible load */
@@ -59,6 +61,8 @@
   --ps-success: #4ade80;
   --ps-warning: #fbbf24;
   --ps-danger: #f87171;
+  /* Dark text on the light red: white on this red is only 2.8:1. */
+  --ps-danger-fg: #450a0a;
   --ps-series-1: #3987e5;
   --ps-series-2: #d95926;
   --ps-grid: #233039;
@@ -74,3 +78,16 @@ body,
 body {
   @apply bg-canvas text-fg font-sans antialiased;
 }
+
+/* People who ask their system for less motion get no spinning or sliding. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

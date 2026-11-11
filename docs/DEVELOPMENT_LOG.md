@@ -102,7 +102,7 @@
 - During the live check, navigating within the single-page app kept cached data; a real reload confirmed the fix (not a code issue).
 
 ### Not done / deferred
-- Bundle size warning (810 kB, 241 kB gzipped), mostly Recharts; code splitting in Stage 8.
+- Bundle size warning (810 kB, 241 kB gzipped), mostly Recharts; fixed in Stage 8 (see below).
 - Holidays, seasons and real meter data are not modelled.
 - The main dev database (`backend/.data/`) still has the Stage 2 test entries and no tariff; the sample-data check used a separate test database that was deleted afterwards.
 
@@ -237,3 +237,39 @@ Substeps A-L, each tested before the next.
 - Old backups are never pruned.
 - The Overview does not yet show scheduler/simulation/report information (Stage 8).
 - OPTIMIZATION_MODEL.md is unchanged: Stage 7 does not touch the model.
+
+## Stage 8 — Integration and polish (2026-11-11) ✅ complete, awaiting approval
+
+### Design decisions
+- **The database owns the theme; local storage is a start-up cache.** The first paint must not flash the wrong colours, and the backend is not available yet at that moment, so the stored value is applied first and the database value replaces it as soon as it answers.
+- **No new "dashboard" page.** The Overview gained three summary cards built on the existing queries, so it cannot disagree with the pages it links to. Wording follows what was proven: a bill change is shown only for a valid schedule, "proven optimal" only for `OPTIMAL`.
+- **Split by page, not by hand-picked library.** `React.lazy` per page lets the bundler place shared code and the chart library by itself.
+- **A failed request is a state of its own.** Where a page used `data ?? []`, "failed to load" was indistinguishable from "none yet".
+- **Test accessibility with a tool, not by eye.** `axe-core` (a development dependency only) runs over every page and two dialogs, with a negative control proving it can fail.
+
+### Deviations from the Stage 0 plan
+- `PUT /api/settings` is `PUT /api/settings/preferences` and carries only the theme. The table also has `default_optimization_priority`, but nothing in the UI uses it, so it is not exposed (no feature was added without a use).
+- The dashboard is the existing Overview rather than a new screen.
+
+### Built
+- Backend: `services/preferences_service.py`, `GET/PUT /api/settings/preferences`, `Preferences` schemas.
+- Frontend: `ThemeSync`, `ActivityCards` (Scheduler, Simulation, Your data), lazy routes and `preloadPages`, skip link, title and focus handling, labelled card regions, reduced-motion CSS, dark-mode danger button colour, loading and error states for the month tiles and the Reports page.
+
+### Verified
+- 395 backend, 145 frontend and 6 Rust tests pass; ruff, mypy (strict), tsc (strict) and ESLint are clean; build succeeds.
+- Bundle: the first screen went from 810 kB (241 kB gzipped) to 372 kB (117 kB gzipped); the 353 kB chart library is a separate chunk.
+- Live, real backend with sample data: the theme chosen in the UI was stored in the database and **restored after the browser's local storage was cleared**; the Overview cards matched the API (a cost-goal run: -400.47 per month, matching the stored `monthly_savings`; it also raised the peak 3.76 to 3.96 kW, which the card shows rather than hides); `axe-core` with colour contrast found no violations on any page in light and dark mode after the fix below; every non-destructive button on all nine pages was clicked (no console errors, no unnamed control, no dialog left open); deleting an appliance through its confirmation dialog removed it, with Cancel focused first and the count unchanged until confirmed. Reset and restore were verified in Stage 7.
+
+### Problems met and fixed
+- **Real accessibility bug:** in dark mode the red "Delete all data" button had white text on a light red (2.8:1; 4.5:1 needed). Found by the in-browser contrast scan; fixed with a dedicated dark-mode foreground colour.
+- The Reports page would have said "No optimization runs yet" after a failed request; the month tiles showed nothing on failure. Both fixed and tested.
+- Lazy pages made existing tests look for headings before the page had loaded; fixed by preloading pages in the test renderer and awaiting headings after navigation.
+- A cards test looked for a region that had no accessible name; this exposed that titled cards were not labelled regions for screen readers. `Card` now labels itself.
+- Vite served a stale stylesheet after an edit, which made the first contrast fix look ineffective; a forced rebuild showed it was working.
+
+### Not done / deferred, and honest caveats
+- **Screen readers were not run.** Axe checks names, roles and labels; I did not listen to NVDA or Narrator.
+- **Downloads inside the packaged Tauri window (WebView2) are still unverified.** The desktop shell was not driven this stage. It should be confirmed on the packaged build in Stage 9.
+- The Overview does not show report history (there is none to show: reports are generated on demand and not stored).
+- `default_optimization_priority` is stored but unused.
+- A very narrow window was not redesigned: the sidebar keeps its width and the content scrolls.

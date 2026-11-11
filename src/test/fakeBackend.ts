@@ -75,6 +75,8 @@ export interface EnergyFixtures {
 export interface FakeBackend {
   /** Backups in the backups folder, newest first. */
   backups: BackupInfo[];
+  /** The theme stored in the database. */
+  theme: 'system' | 'light' | 'dark';
   household: Household | null;
   appliances: Appliance[];
   tariffs: Tariff[];
@@ -99,7 +101,7 @@ function json(body: unknown, status = 200): Response {
 
 const notFound = () => json({ error: { code: 'not_found', message: 'Not Found', fields: {} } }, 404);
 
-type Initial = Partial<Pick<FakeBackend, 'household' | 'appliances' | 'tariffs' | 'energy' | 'runs' | 'solve' | 'scenarios' | 'simulate' | 'backups'>>;
+type Initial = Partial<Pick<FakeBackend, 'household' | 'appliances' | 'tariffs' | 'energy' | 'runs' | 'solve' | 'scenarios' | 'simulate' | 'backups' | 'theme'>>;
 
 export function installFakeBackend(initial: Initial = {}): FakeBackend {
   const overrides: Override[] = [];
@@ -112,6 +114,7 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     runs: initial.runs ?? [],
     scenarios: initial.scenarios ?? [],
     backups: initial.backups ?? [],
+    theme: initial.theme ?? 'system',
     ...(initial.simulate ? { simulate: initial.simulate } : {}),
     ...(initial.solve ? { solve: initial.solve } : {}),
     requests: [],
@@ -213,6 +216,10 @@ export function installFakeBackend(initial: Initial = {}): FakeBackend {
     if (path === '/api/reports/export' && method === 'POST') {
       const request = body as { type: string; format: string };
       return attachment('report-bytes', `powershift-${request.type.replaceAll('_', '-')}-20261111.${request.format}`);
+    }
+    if (path === '/api/settings/preferences') {
+      if (method === 'PUT') backend.theme = (body as { theme: 'system' | 'light' | 'dark' }).theme;
+      return json({ theme: backend.theme });
     }
     if (path === '/api/settings/about') return json(ABOUT);
     if (path === '/api/settings/export') return attachment('{}', 'powershift-data-export.json', 'application/json');

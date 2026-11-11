@@ -1,6 +1,6 @@
 # User Guide
 
-*Covers features available now. Last updated: Stage 7.*
+*Covers features available now. Last updated: Stage 8.*
 
 All numbers PowerShift shows are **estimates** calculated from what you enter.
 PowerShift does not connect to a meter and does not measure anything.
@@ -211,10 +211,29 @@ Shows this month's estimated energy, bill, average per day and the share of ener
 that comes from flexible appliances (what a scheduler could shift), plus the hourly
 profile, your household summary, and the local engine status.
 
+Three cards summarise your recent work, each with a link to its page:
+
+- **Smart Scheduler**: your latest run, with the estimated change in your monthly bill and
+  whether the result is proven optimal. If no valid schedule was found, it says so.
+- **Simulation Lab**: how many scenarios you have and the latest result. "Edited since; run it
+  again" means the figures are out of date.
+- **Your data**: when you last made a backup, and a link to Settings.
+
+If something cannot be loaded, that card says so and the others keep working.
+
 ## Theme
 
 Use the switch at the bottom of the sidebar to choose **Light**, **Dark** or
-**System** (follows Windows). Your choice is remembered.
+**System** (follows Windows). Your choice is saved with your data (so it comes back with a restored
+backup) and remembered by the app window.
+
+## Keyboard and screen readers
+
+- Press **Tab** once after the app opens to reveal **Skip to main content**, then **Enter** to jump past the menu.
+- After you open another section, keyboard focus moves to the top of the page and the window title
+  names the section.
+- Dialogs trap focus, **Esc** closes them, and the safe button (Cancel) is selected first when something would be deleted.
+- If Windows is set to reduce animations, PowerShift shows none.
 
 ## 8. Reports
 
@@ -253,4 +272,4 @@ that has been run; the page says so and links to the right place.
 
 ## Not available yet
 
-Dashboard integration of scheduler and simulation results, and the Windows installer, come in Stages 8 and 9.
+The Windows installer is added in Stage 9.

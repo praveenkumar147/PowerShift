@@ -9,6 +9,7 @@ import { useLoadSampleData } from '@/features/demo/api';
 import { HourlyProfileSection } from '@/features/energy/HourlyProfileSection';
 import { useHousehold } from '@/features/household/api';
 import { HouseholdSummaryCard } from '@/features/overview/HouseholdSummaryCard';
+import { BackupCard, SchedulerCard, SimulationCard } from '@/features/overview/ActivityCards';
 import { MonthSummary } from '@/features/overview/MonthSummary';
 import { SystemStatusCard } from '@/features/overview/SystemStatusCard';
 
@@ -41,6 +42,11 @@ export function OverviewPage() {
               <HouseholdSummaryCard household={household.data} appliances={appliances.data} />
             </div>
             <SystemStatusCard />
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            <SchedulerCard currency={currency} />
+            <SimulationCard currency={currency} />
+            <BackupCard />
           </div>
         </div>
       )}

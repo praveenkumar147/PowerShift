@@ -7,7 +7,7 @@ const VARIANT_CLASSES: Record<Variant, string> = {
   primary: 'bg-accent text-accent-fg hover:opacity-90',
   secondary: 'border border-border bg-surface text-fg hover:bg-surface-raised',
   ghost: 'text-muted hover:bg-surface-raised hover:text-fg',
-  danger: 'bg-danger text-white hover:opacity-90',
+  danger: 'bg-danger text-danger-fg hover:opacity-90',
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

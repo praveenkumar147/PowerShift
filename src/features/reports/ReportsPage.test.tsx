@@ -122,6 +122,18 @@ describe('Reports page', () => {
     await waitFor(() => expect(lastExport(backend.requests)).toMatchObject({ params: { run_id: 1 } }));
   });
 
+  it('says the data could not be loaded instead of claiming there are no runs', async () => {
+    const backend = installFakeBackend({ household: HOME });
+    backend.respondOnce('GET', '/api/optimization/history', 500, { error: { code: 'internal_error', message: 'History unavailable', fields: {} } });
+    renderApp('/reports');
+    await screen.findByRole('heading', { level: 1, name: 'Reports' });
+    await choose('Optimization comparison report');
+
+    expect(await screen.findByText(/Could not load the data this report needs: History unavailable/)).toBeInTheDocument();
+    expect(screen.queryByText(/No optimization runs yet/)).not.toBeInTheDocument();
+    expect(exportButton('PDF')).toBeDisabled();
+  });
+
   it('needs a scenario that has been run; scenarios without a result are not offered', async () => {
     await open({ scenarios: [scenario(1, 'Never run', false)] });
     await choose('Simulation comparison report');

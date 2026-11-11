@@ -60,3 +60,13 @@ class About(BaseModel):
     backups_dir: str
     logs_dir: str
     counts: dict[str, int]
+
+
+class Preferences(BaseModel):
+    theme: Literal["system", "light", "dark"]
+
+
+class PreferencesUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    theme: Literal["system", "light", "dark"]

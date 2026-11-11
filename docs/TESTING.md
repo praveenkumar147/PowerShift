@@ -1,6 +1,6 @@
 # Testing
 
-*Last updated: Stage 7. Totals: 391 backend, 120 frontend, 6 Rust.*
+*Last updated: Stage 8. Totals: 395 backend, 145 frontend, 6 Rust.*
 
 ## How to run
 
@@ -51,6 +51,8 @@
 | `integration/test_data_management_api.py` | Create/list/download backups (unique names, no overwrites); path-traversal names refused; check changes nothing; restore replaces data, makes a `pre-restore` copy first, upgrades older revisions, and a rejected file leaves the data untouched; raw upload check/restore and size limit (413); reset needs the exact word `RESET`, makes a `pre-reset` copy, deletes all user data and keeps backups; reset then restore round trip; JSON export; About figures |
 | `integration/test_commit_ordering.py` | A write is **committed before the response is sent** (watches the database at the moment the `201`/`204` leaves the app, which `TestClient` cannot see) |
 
+| `integration/test_preferences_api.py` | Default is `system` and reading writes nothing; the choice is stored in the database in a single row; invalid themes, extra fields and an empty body are `422` and change nothing; reset returns the theme to the default |
+
 The fixtures in `tests/factories.py` are test data, not product data. Tariff rates
 in tests are invented round numbers chosen to make hand arithmetic easy.
 
@@ -79,6 +81,12 @@ in tests are invented round numbers chosen to make hand arithmetic easy.
 | `features/reports/ReportsPage.test.tsx` | All seven reports offered with what every report states; CSV export sends the chosen range and saves the file the server names; only the options a report uses are shown; month/year, weekday and run choices are sent; runs/scenarios missing → explanation, link and disabled export; server errors shown next to the field |
 | `features/settings/DataManagement.test.tsx` | About figures; creating, downloading and restoring stored backups; restore validates first and shows the contents before anything is replaced; rejected files explained with "your data has not been changed"; undo hint names the safety copy; export; reset needs the exact word `RESET` and shows what was removed |
 
+| `app/theme/ThemeSync.test.tsx` | The database theme overrides a different one remembered by the browser (with no write-back); a change by the user is saved with `PUT`; the theme still switches when the preferences request fails |
+| `features/overview/ActivityCards.test.tsx` | Invitations when nothing has been done; the latest valid run with its signed bill change and "proven optimal"; a `FEASIBLE` run is never called optimal and an infeasible one is reported honestly; the latest scenario result with an out-of-date warning; the last backup; one failing card does not hide the others; month tiles report a failed request |
+| `app/accessibility.test.tsx` | `axe-core` finds **no violations** on all nine pages and in the appliance-form and reset dialogs; a negative control proves the check can fail (missing button name, image alt, input label). Colour contrast is not testable in jsdom and was checked in a real browser instead |
+| `app/AppShell.test.tsx` (additions) | The window title follows the page and focus moves to the main region after navigating; the skip link is the first tab stop and moves focus to the content |
+| `features/reports/ReportsPage.test.tsx` (addition) | A failed history request says the data could not be loaded instead of "no runs yet", and blocks the export |
+
 UI tests run against `src/test/fakeBackend.ts`, a small in-memory stand-in for the API,
 so they test the UI's behaviour without depending on the order of requests.
 
@@ -90,6 +98,8 @@ status JSON shape matches the TypeScript type.
 
 ### Not covered by automated tests
 
+- Colour contrast (needs real layout): checked once per page in a real browser, light and dark, with `axe-core`.
+- Actual screen-reader output (NVDA/Narrator). The automated checks cover names, roles and labels, not what is announced.
 - Whether the packaged Tauri window (WebView2) saves downloaded files. Verified only in a browser.
 - How the PDF pages look. Tests check that the PDF is valid and its text is extractable, not the visual layout.
 

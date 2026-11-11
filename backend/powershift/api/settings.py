@@ -18,11 +18,14 @@ from powershift.schemas.data import (
     About,
     BackupInfo,
     BackupSummary,
+    Preferences,
+    PreferencesUpdate,
     ResetRequest,
     ResetResult,
     RestoreResult,
 )
 from powershift.services.data_service import DataService
+from powershift.services.preferences_service import PreferencesService
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -42,6 +45,16 @@ async def _uploaded_bytes(request: Request) -> bytes:
     if not data:
         raise ValidationFailedError("No file was received.", {"file": "Choose a backup file."})
     return data
+
+
+@router.get("/preferences", response_model=Preferences)
+def get_preferences(session: SessionDep) -> Preferences:
+    return PreferencesService(session).get()
+
+
+@router.put("/preferences", response_model=Preferences)
+def put_preferences(update: PreferencesUpdate, session: SessionDep) -> Preferences:
+    return PreferencesService(session).update(update)
 
 
 @router.get("/about", response_model=About)

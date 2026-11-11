@@ -1,3 +1,4 @@
+import { Spinner } from '@/components/ui/Spinner';
 import { StatTile } from '@/components/ui/StatTile';
 import { useBillEstimate, useEnergyReport } from '@/features/energy/api';
 import { monthLong, monthRange } from '@/lib/dates';
@@ -11,7 +12,14 @@ export function MonthSummary({ currency }: { currency: string | null }) {
   const report = useEnergyReport({ ...monthRange(year, month), category: '' });
   const bill = useBillEstimate(year, month);
 
-  if (!report.data) return null;
+  if (report.isPending) return <Spinner label="Loading this month's estimates" />;
+  if (!report.data) {
+    return (
+      <p role="alert" className="text-sm text-danger">
+        This month's estimates could not be loaded{report.error ? `: ${report.error.message}` : ''}.
+      </p>
+    );
+  }
   const flexibleKwh = report.data.appliances.filter((a) => a.mode === 'flexible').reduce((sum, a) => sum + a.kwh, 0);
   const flexibleShare = report.data.total_kwh ? flexibleKwh / report.data.total_kwh : 0;
   const monthName = monthLong(month);

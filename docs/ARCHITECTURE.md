@@ -1,6 +1,6 @@
 # Architecture
 
-*Describes what is implemented. Last updated: Stage 7.*
+*Describes what is implemented. Last updated: Stage 8.*
 
 ## Overview
 
@@ -234,3 +234,30 @@ offering the destructive button.
 
 Write ordering: the database session dependency is declared with `scope="function"` so its commit
 runs when the endpoint returns and before the response is sent.
+
+## Integration and polish (Stage 8)
+
+**Theme in the database.** `ThemeProvider` still reads local storage synchronously so the first
+paint has the right colours. `ThemeSync` (inside the router, so it can use the API) then asks the
+backend for `GET /api/settings/preferences`: the database wins at startup, and from then on every
+change the user makes is saved with `PUT`. If the backend cannot be reached the choice still works
+for the session. Local storage is therefore only a start-up cache, never the source of truth.
+
+**Overview** shows the month's figures, the hourly profile, the household, plus three cards that
+read the same queries the full pages use: latest Smart Scheduler run (a bill change is shown only
+for a *valid* schedule, and "proven optimal" only when the status is `OPTIMAL`), the latest
+Simulation Lab result (flagged when edited since), and the last manual backup. Every card has its
+own loading, empty and error state, so one failed request never hides the others.
+
+**Code splitting.** Each page is loaded with `React.lazy`, with a `Suspense` fallback in `AppLayout`.
+Vite puts shared code into small shared chunks and the chart library into its own chunk. `preloadPages()`
+loads every page up front; the test renderer uses it so tests do not wait for downloads.
+
+**Honest empty/error states.** A query that failed is never shown as "nothing yet": the Reports page
+distinguishes loading, failed and empty for runs and scenarios, and the month tiles report failures.
+
+**Accessibility.** Titled cards are labelled regions (`aria-labelledby`); the window title follows
+the page; after navigating, focus moves to the main region; a *Skip to main content* button is the
+first tab stop (a button, not a `#link`, because the app uses hash routing); reduced-motion users get
+no animation; the danger button uses a dedicated foreground colour in dark mode (white on the dark-mode red
+was only 2.8:1). `axe-core` runs in the test suite against every page and two dialogs.

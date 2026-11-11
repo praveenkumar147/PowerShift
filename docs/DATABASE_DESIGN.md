@@ -1,6 +1,6 @@
 # Database Design
 
-*Describes the schema that exists now. Last updated: Stage 7 (revision `0005`, no schema change).*
+*Describes the schema that exists now. Last updated: Stage 8 (revision `0005`, no schema change).*
 The full planned schema is in [STAGE0_PLAN.md §6](STAGE0_PLAN.md#6-initial-database-design).
 
 ## Engine
@@ -60,7 +60,7 @@ Integers avoid time-zone and date problems, make window arithmetic simple
 | time_format | VARCHAR(3) | `12h` or `24h` (CHECK) |
 | created_at, updated_at | DATETIME (UTC) | |
 
-### `app_settings` (one row, not yet used by the API)
+### `app_settings` (one row, holds the theme)
 
 | Column | Type | Rules |
 |---|---|---|
@@ -249,4 +249,4 @@ Stage 7 added **no tables or migrations**. Notes on how the database file is han
   a newer one is refused so an old app never opens a newer schema.
 - Reset deletes rows in foreign-key order (children first) in one transaction; the schema, the
   `alembic_version` row and the backups folder are untouched.
-- `app_settings` is still unused: the theme remains in the browser's local storage (planned for Stage 8).
+- `app_settings` holds the theme since Stage 8 (`GET/PUT /api/settings/preferences`). No row means "system". Reset deletes the row, so the theme returns to the default; a restored backup brings back the theme it was saved with. `default_optimization_priority` exists in the table but nothing reads or writes it yet.

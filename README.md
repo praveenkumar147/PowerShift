@@ -4,10 +4,11 @@ An offline-first Windows desktop app for estimating household electricity use an
 cost, analysing peak demand, and generating optimized appliance schedules with
 Google OR-Tools (CP-SAT).
 
-> **Status: Stage 7 complete.** Household profile, appliance management, configurable
+> **Status: Stage 8 complete.** Household profile, appliance management, configurable
 > tariffs, bill estimates, energy analysis, peak load analysis, the **CP-SAT Smart
 > Scheduler**, the **Simulation Lab**, **PDF/CSV reports** and **data management**
-> (backups, validated restore, export, reset) work. Integration and polish come next in Stage 8.
+> (backups, validated restore, export, reset) work, and the Overview now summarises the scheduler, the
+> Simulation Lab and your backups. Packaging and final verification come next in Stage 9.
 > See [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
 
 All data stays on your computer. There are no accounts, cloud services or external APIs.
@@ -105,9 +106,9 @@ See [docs/TESTING.md](docs/TESTING.md).
 ## Known limitations
 
 - Packaging as a Windows installer is not set up yet (Stage 9).
-- Exports are saved through the browser download mechanism. This is tested in a browser and in unit tests, but not yet inside the packaged Tauri window (Stage 8/9).
+- Exports are saved through the browser download mechanism. This is tested in a browser and in unit tests, but not yet inside the packaged Tauri window (Stage 9).
 - PDF layout was checked by tests (text, structure, fonts), not by looking at the pages.
 - Backups are never deleted automatically; remove old ones from the backups folder yourself.
-- The frontend bundle is about 810 kB (241 kB gzipped), mostly the chart library; code splitting is planned for Stage 8.
+- The first screen downloads about 372 kB (117 kB gzipped). The chart library (353 kB, 103 kB gzipped) loads only with pages that draw charts, including the Overview.
 - Holidays and seasonal changes are not modelled: every Monday follows the same routine.
 - All energy figures will be estimates from user-entered data, not measurements.

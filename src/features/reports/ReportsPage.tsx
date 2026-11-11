@@ -56,8 +56,10 @@ export function ReportsPage() {
   // Scenarios the user unticked. Storing exclusions (not selections) means new scenarios start ticked.
   const [excluded, setExcluded] = useState<number[]>([]);
   const exportReport = useExportReport();
-  const runs = useOptimizationHistory().data ?? [];
-  const scenarios = (useScenarios().data ?? []).filter((s) => s.latest_result !== null);
+  const history = useOptimizationHistory();
+  const scenarioList = useScenarios();
+  const runs = history.data ?? [];
+  const scenarios = (scenarioList.data ?? []).filter((s) => s.latest_result !== null);
   const scenarioIds = scenarios.map((s) => s.id);
 
   const selectedScenarioIds = scenarioIds.filter((id) => !excluded.includes(id));
@@ -66,7 +68,15 @@ export function ReportsPage() {
   const report = REPORTS.find((r) => r.kind === kind) ?? REPORTS[0];
   if (!report) return null;
 
+  // Never say "none yet" when the truth is "could not look": a failed or slow request is its own state.
+  const source = report.kind === 'optimization_comparison' ? history : report.kind === 'simulation_comparison' ? scenarioList : null;
+  const unavailable = source?.isError
+    ? { text: `Could not load the data this report needs: ${source.error.message}`, to: null, label: '' }
+    : source?.isPending
+      ? { text: 'Loading the data this report needs…', to: null, label: '' }
+      : null;
   const missingData =
+    unavailable ||
     (report.kind === 'optimization_comparison' && runs.length === 0 && { text: 'No optimization runs yet. Run the Smart Scheduler first.', to: '/scheduler', label: 'Open Smart Scheduler' }) ||
     (report.kind === 'simulation_comparison' && scenarios.length === 0 && { text: 'No scenario has been run yet. Run a scenario in the Simulation Lab first.', to: '/simulation', label: 'Open Simulation Lab' }) ||
     null;
@@ -127,7 +137,7 @@ export function ReportsPage() {
             {missingData && (
               <div role="status" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-surface-raised px-4 py-3 text-sm">
                 <span className="text-muted">{missingData.text}</span>
-                <LinkButton to={missingData.to}>{missingData.label}</LinkButton>
+                {missingData.to && <LinkButton to={missingData.to}>{missingData.label}</LinkButton>}
               </div>
             )}
             {generalError && (
